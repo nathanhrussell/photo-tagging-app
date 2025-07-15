@@ -10,8 +10,9 @@ const PORT = process.env.PORT || 3000;
 app.use(cors());
 app.use(express.json());
 
-app.get("/", (req, res) => {
-  res.send("Waldo backend is running!");
+app.get("/api/test", (req, res) => {
+  console.log("✅ /api/test hit");
+  res.json({ message: "Backend is working!" });
 });
 
 app.listen(PORT, () => {
