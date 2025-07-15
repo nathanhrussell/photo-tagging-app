@@ -9,6 +9,7 @@ const PORT = process.env.PORT || 3000;
 
 app.use(cors());
 app.use(express.json());
+app.use("/images", express.static("public"));
 
 app.get("/api/test", (req, res) => {
   console.log("✅ /api/test hit");
