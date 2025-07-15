@@ -20,6 +20,8 @@ model Character {
   name     String
   x        Float
   y        Float
+  width    Float
+  height   Float
   level    Level   @relation(fields: [levelId], references: [id])
   levelId  Int
 }
