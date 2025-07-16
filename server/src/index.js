@@ -29,6 +29,37 @@ app.get("/api/levels/:id/characters", async (req, res) => {
   }
 });
 
+app.post("/api/validate-click", async (req, res) => {
+  const { levelId, character, x, y } = req.body;
+
+  try {
+    const match = await prisma.character.findFirst({
+      where: {
+        levelId: parseInt(levelId),
+        name: character
+      }
+    });
+
+    if (!match) {
+      return res.status(404).json({ correct: false, message: "Character not found" });
+    }
+
+    const withinX = x >= match.x && x <= match.x + match.width;
+    const withinY = y >= match.y && y <= match.y + match.height;
+
+    if (withinX && withinY) {
+      return res.json({ correct: true });
+    } else {
+      return res.json({ correct: false });
+    }
+
+  } catch (err) {
+    console.error(err);
+    return res.status(500).json({ error: "Server error" });
+  }
+});
+
+
 app.use(cors());
 app.use(express.json());
 app.use("/images", express.static("public"));

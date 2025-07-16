@@ -18,10 +18,21 @@ export default function PlaygroundTarget() {
     point.x = e.clientX;
     point.y = e.clientY;
     const svgPoint = point.matrixTransform(svg.getScreenCTM().inverse());
+
+    const xPercent = (svgPoint.x / SVG_WIDTH) * 100;
+    const yPercent = (svgPoint.y / SVG_HEIGHT) * 100;
+
+    console.log("🎯 Raw SVG coords:", svgPoint);
+    console.log("📐 Normalised (%):", {
+      x: xPercent.toFixed(2),
+      y: yPercent.toFixed(2),
+    });
+
     setCircle({ x: svgPoint.x, y: svgPoint.y });
     setShowModal(true);
     setSelected({});
   };
+
 
   const handleCheckboxChange = (name) => {
     setSelected((prev) => ({
