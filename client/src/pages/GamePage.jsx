@@ -1,6 +1,5 @@
 import React, { useRef, useState } from "react";
 
-// Use the actual size of your image
 const IMAGE_SRC = "http://localhost:3000/images/level1.png";
 const SVG_WIDTH = 1152;
 const SVG_HEIGHT = 768;
@@ -12,7 +11,8 @@ export default function GamePage() {
   const [percentCoords, setPercentCoords] = useState(null);
   const [showModal, setShowModal] = useState(false);
   const [selected, setSelected] = useState({});
-  const [feedback, setFeedback] = useState(null); // "correct" | "incorrect"
+  const [feedback, setFeedback] = useState(null);
+  const [foundCharacters, setFoundCharacters] = useState([]);
 
   const handleImageClick = (e) => {
     const svg = svgRef.current;
@@ -33,28 +33,40 @@ export default function GamePage() {
   const validateCharacterSelection = async (characterName) => {
     if (!percentCoords) return;
 
+    const payload = {
+      levelId: 1,
+      character: characterName,
+      x: percentCoords.x,
+      y: percentCoords.y
+    };
+
+    console.log("📤 Sending to backend:", payload);
+
     try {
       const res = await fetch("http://localhost:3000/api/validate-click", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          levelId: 1,
-          character: characterName,
-          x: percentCoords.x,
-          y: percentCoords.y
-        })
+        body: JSON.stringify(payload)
       });
 
       const data = await res.json();
+      console.log("📥 Response from backend:", data);
+
       if (data.correct) {
         setFeedback("correct");
+        setFoundCharacters((prev) => [...prev, characterName]);
       } else {
         setFeedback("incorrect");
       }
 
-      setTimeout(() => setFeedback(null), 3000);
+      // Clear selection and circle
       setShowModal(false);
       setCircle(null);
+      setSelected({});
+      setPercentCoords(null);
+
+      // Remove feedback after delay
+      setTimeout(() => setFeedback(null), 3000);
     } catch (err) {
       console.error("❌ Error validating click:", err);
     }
@@ -123,7 +135,13 @@ export default function GamePage() {
       </div>
 
       {feedback && (
-        <div className="mt-4 text-lg font-bold">
+        <div
+          className={`mt-4 text-lg font-bold px-4 py-2 rounded ${
+            feedback === "correct"
+              ? "bg-green-200 text-green-800"
+              : "bg-red-200 text-red-800"
+          }`}
+        >
           {feedback === "correct" ? "✅ Correct!" : "❌ Not quite. Try again!"}
         </div>
       )}
@@ -140,13 +158,24 @@ export default function GamePage() {
                 <input
                   type="checkbox"
                   checked={!!selected[char]}
+                  disabled={foundCharacters.includes(char)}
                   onChange={() => {
-                    setSelected({ [char]: true });
-                    validateCharacterSelection(char);
+                    if (!foundCharacters.includes(char)) {
+                      setSelected({ [char]: true });
+                      validateCharacterSelection(char);
+                    }
                   }}
                   className="accent-red-500"
                 />
-                <span>{char}</span>
+                <span
+                  className={
+                    foundCharacters.includes(char)
+                      ? "line-through text-gray-400"
+                      : ""
+                  }
+                >
+                  {char}
+                </span>
               </label>
             ))}
           </form>
