@@ -1,9 +1,17 @@
-import React, { useRef, useState } from "react";
+import React, { useRef, useState, useEffect } from "react";
 
 const IMAGE_SRC = "http://localhost:3000/images/level1.png";
 const SVG_WIDTH = 1152;
 const SVG_HEIGHT = 768;
 const characters = ["Waldo", "Sunhat Girl", "Stroller Baby"];
+
+function formatTime(seconds) {
+  const mins = Math.floor(seconds / 60)
+    .toString()
+    .padStart(2, "0");
+  const secs = (seconds % 60).toString().padStart(2, "0");
+  return `${mins}:${secs}`;
+}
 
 export default function GamePage() {
   const svgRef = useRef(null);
@@ -19,16 +27,45 @@ export default function GamePage() {
   const [foundCharacters, setFoundCharacters] = useState([]);
   const [foundMarkers, setFoundMarkers] = useState([]);
 
-  // Timer logic placeholder
-  // const [timerStarted, setTimerStarted] = useState(false);
+  // Timer logic
+  const [elapsed, setElapsed] = useState(0);
+  const [timerActive, setTimerActive] = useState(false);
+
+  // Start timer on game start, stop on all found
+  useEffect(() => {
+    let interval;
+    if (gameStarted && !timerActive && foundCharacters.length < characters.length) {
+      setTimerActive(true);
+    }
+    if (timerActive && foundCharacters.length < characters.length) {
+      interval = setInterval(() => setElapsed((t) => t + 1), 1000);
+    }
+    if (foundCharacters.length === characters.length && timerActive) {
+      setTimerActive(false);
+    }
+    return () => clearInterval(interval);
+  }, [gameStarted, timerActive, foundCharacters.length]);
+
+  // Stop timer and prevent further ticks
+  useEffect(() => {
+    if (foundCharacters.length === characters.length) {
+      setTimerActive(false);
+    }
+  }, [foundCharacters.length]);
+
+  // Reset everything on reload
+  useEffect(() => {
+    setElapsed(0);
+    setTimerActive(false);
+  }, []);
 
   const getCharacterImage = (name) =>
     `http://localhost:3000/images/characters/${name.toLowerCase().replace(/\s+/g, "-")}.png`;
 
   // Handles a user clicking on the image to make a guess
   const handleImageClick = (e) => {
-    // Do nothing if all found
     if (foundCharacters.length === characters.length) return;
+    setFeedback(null); // clear feedback on every new guess
 
     const svg = svgRef.current;
     const point = svg.createSVGPoint();
@@ -72,8 +109,7 @@ export default function GamePage() {
           ...prev,
           { name: characterName, x: circle.x, y: circle.y }
         ]);
-        // Clear circle after correct guess
-        setCircle(null);
+        setCircle(null); // clear circle after correct guess
       } else {
         setFeedback("incorrect");
         // Keep circle for incorrect guesses
@@ -81,7 +117,7 @@ export default function GamePage() {
 
       setSelected({});
       setPercentCoords(null);
-      setTimeout(() => setFeedback(null), 3000);
+      // Feedback stays until replaced
     } catch (err) {
       console.error("❌ Error validating click:", err);
     }
@@ -90,7 +126,9 @@ export default function GamePage() {
   // Handles clicking "Start Game"
   const startGame = () => {
     setGameStarted(true);
-    // setTimerStarted(true); // (For timer, add this)
+    setElapsed(0);
+    setTimerActive(true);
+    // setTimerStarted(true); // (Not needed)
   };
 
   return (
@@ -98,6 +136,36 @@ export default function GamePage() {
       <h1 className="text-2xl font-bold mb-4 text-center">
         AI Slop Challenge: Find The Characters
       </h1>
+
+      {/* Timer */}
+      <div className="flex justify-center items-center gap-8 w-full max-w-xl mb-4">
+        <div className="text-xl font-mono bg-gray-50 rounded-lg px-4 py-2 border shadow text-gray-800">
+          Time: {formatTime(elapsed)}
+        </div>
+        {/* Show “Well done” if all found */}
+        {foundCharacters.length === characters.length && (
+          <div className="text-green-700 font-semibold text-lg">
+            🎉 Well done!
+          </div>
+        )}
+      </div>
+
+      {/* Feedback message always fixed at top, high z-index */}
+      {feedback && (
+        <div className="fixed top-6 left-0 w-full flex justify-center z-[120] pointer-events-none">
+          <div
+            className={`text-lg font-bold px-4 py-2 rounded shadow ${
+              feedback === "correct"
+                ? "bg-green-200 text-green-800"
+                : "bg-red-200 text-red-800"
+            }`}
+          >
+            {feedback === "correct"
+              ? "✅ Correct!"
+              : "❌ Not quite. Try again!"}
+          </div>
+        </div>
+      )}
 
       <div className="w-full" style={{ maxWidth: "900px", aspectRatio: `${SVG_WIDTH} / ${SVG_HEIGHT}` }}>
         <svg
@@ -181,20 +249,6 @@ export default function GamePage() {
           )}
         </svg>
       </div>
-
-      {feedback && (
-        <div
-          className={`mt-4 text-lg font-bold px-4 py-2 rounded ${
-            feedback === "correct"
-              ? "bg-green-200 text-green-800"
-              : "bg-red-200 text-red-800"
-          }`}
-        >
-          {feedback === "correct"
-            ? "✅ Correct!"
-            : "❌ Not quite. Try again!"}
-        </div>
-      )}
 
       {/* Modal - Always visible */}
       <div className={`fixed inset-0 flex items-center justify-center z-50 p-4 ${
