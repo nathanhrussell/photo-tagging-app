@@ -7,18 +7,31 @@ const characters = ["Waldo", "Sunhat Girl", "Stroller Baby"];
 
 export default function GamePage() {
   const svgRef = useRef(null);
+  const [gameStarted, setGameStarted] = useState(false);
   const [circle, setCircle] = useState(null);
   const [percentCoords, setPercentCoords] = useState(null);
-  const [showModal, setShowModal] = useState(false);
+
+  // Modal logic
+  // modalMode: "intro" | "guess"
+  const [showModal, setShowModal] = useState(true);
+  const [modalMode, setModalMode] = useState("intro");
+
   const [selected, setSelected] = useState({});
   const [feedback, setFeedback] = useState(null);
   const [foundCharacters, setFoundCharacters] = useState([]);
-  const [foundMarkers, setFoundMarkers] = useState([]); // ✅ New state
+  const [foundMarkers, setFoundMarkers] = useState([]);
+
+  // Timer logic placeholder
+  // const [timerStarted, setTimerStarted] = useState(false);
 
   const getCharacterImage = (name) =>
     `http://localhost:3000/images/characters/${name.toLowerCase().replace(/\s+/g, "-")}.png`;
 
+  // Handles a user clicking on the image to make a guess
   const handleImageClick = (e) => {
+    // Do nothing if all found
+    if (foundCharacters.length === characters.length) return;
+
     const svg = svgRef.current;
     const point = svg.createSVGPoint();
     point.x = e.clientX;
@@ -30,10 +43,12 @@ export default function GamePage() {
 
     setCircle({ x: svgPoint.x, y: svgPoint.y });
     setPercentCoords({ x: xPercent, y: yPercent });
-    setShowModal(true);
     setSelected({});
+    setModalMode("guess");
+    setShowModal(true);
   };
 
+  // Handles user selecting a character from the guess modal
   const validateCharacterSelection = async (characterName) => {
     if (!percentCoords || !circle) return;
 
@@ -44,8 +59,6 @@ export default function GamePage() {
       y: percentCoords.y
     };
 
-    console.log("📤 Sending to backend:", payload);
-
     try {
       const res = await fetch("http://localhost:3000/api/validate-click", {
         method: "POST",
@@ -54,12 +67,14 @@ export default function GamePage() {
       });
 
       const data = await res.json();
-      console.log("📥 Response from backend:", data);
 
       if (data.correct) {
         setFeedback("correct");
         setFoundCharacters((prev) => [...prev, characterName]);
-        setFoundMarkers((prev) => [...prev, { name: characterName, x: circle.x, y: circle.y }]); // ✅ Store position
+        setFoundMarkers((prev) => [
+          ...prev,
+          { name: characterName, x: circle.x, y: circle.y }
+        ]);
       } else {
         setFeedback("incorrect");
       }
@@ -74,9 +89,17 @@ export default function GamePage() {
     }
   };
 
+  // Handles clicking "Start Game"
+  const startGame = () => {
+    setGameStarted(true);
+    // setTimerStarted(true); // (For timer, add this)
+  };
+
   return (
     <div className="flex flex-col items-center w-full p-4">
-      <h1 className="text-2xl font-bold mb-4 text-center">AI Slop Challenge: Find The Characters</h1>
+      <h1 className="text-2xl font-bold mb-4 text-center">
+        AI Slop Challenge: Find The Characters
+      </h1>
 
       <div className="w-full" style={{ maxWidth: "900px", aspectRatio: `${SVG_WIDTH} / ${SVG_HEIGHT}` }}>
         <svg
@@ -90,13 +113,16 @@ export default function GamePage() {
             backgroundSize: "contain",
             backgroundRepeat: "no-repeat",
             backgroundPosition: "center",
-            cursor: "crosshair",
+            cursor:
+              gameStarted && foundCharacters.length !== characters.length
+                ? "crosshair"
+                : "default",
             borderRadius: "1rem",
             boxShadow: "0 4px 12px rgba(0,0,0,0.06)"
           }}
-          onClick={handleImageClick}
+          onClick={gameStarted ? handleImageClick : undefined}
         >
-          {/* ✅ Permanent green markers */}
+          {/* Permanent green markers */}
           {foundMarkers.map((marker) => (
             <g key={marker.name}>
               <circle
@@ -166,17 +192,21 @@ export default function GamePage() {
               : "bg-red-200 text-red-800"
           }`}
         >
-          {feedback === "correct" ? "✅ Correct!" : "❌ Not quite. Try again!"}
+          {feedback === "correct"
+            ? "✅ Correct!"
+            : "❌ Not quite. Try again!"}
         </div>
       )}
 
-      {/* Modal */}
+      {/* Modal (intro OR guess) */}
       {showModal && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
           <div className="bg-white rounded-2xl shadow-2xl w-full max-w-md mx-auto transition-all duration-300">
             <div className="px-6 py-4 border-b border-gray-100">
               <h2 className="text-xl font-semibold text-gray-800 text-center">
-                Who did you find?
+                {modalMode === "intro"
+                  ? "Find these characters"
+                  : "Who did you find?"}
               </h2>
             </div>
             <div className="p-6">
@@ -184,13 +214,14 @@ export default function GamePage() {
                 {characters.map((char) => {
                   const isFound = foundCharacters.includes(char);
                   const isSelected = selected[char];
-
                   return (
                     <button
                       key={char}
-                      disabled={isFound}
+                      disabled={
+                        (modalMode === "intro") || isFound
+                      }
                       onClick={() => {
-                        if (!isFound) {
+                        if (modalMode === "guess" && !isFound) {
                           setSelected({ [char]: true });
                           validateCharacterSelection(char);
                         }
@@ -198,10 +229,12 @@ export default function GamePage() {
                       className={`
                         relative flex flex-col items-center p-4 rounded-xl border-2 transition-all duration-200 
                         ${isFound 
-                          ? 'opacity-50 cursor-not-allowed border-gray-200 bg-gray-50' 
-                          : 'hover:border-red-400 hover:shadow-md cursor-pointer border-gray-200 bg-white hover:bg-red-50'
+                          ? "opacity-50 cursor-not-allowed border-gray-200 bg-gray-50"
+                          : modalMode === "intro"
+                          ? "opacity-70 cursor-not-allowed"
+                          : "hover:border-red-400 hover:shadow-md cursor-pointer border-gray-200 bg-white hover:bg-red-50"
                         }
-                        ${isSelected ? 'border-red-500 bg-red-50' : ''}
+                        ${isSelected ? "border-red-500 bg-red-50" : ""}
                       `}
                     >
                       <div className="relative mb-3">
@@ -218,7 +251,7 @@ export default function GamePage() {
                         )}
                       </div>
                       <span className={`text-sm font-medium text-center leading-tight ${
-                        isFound ? 'line-through text-gray-400' : 'text-gray-700'
+                        isFound ? "line-through text-gray-400" : "text-gray-700"
                       }`}>
                         {char}
                       </span>
@@ -228,12 +261,15 @@ export default function GamePage() {
               </div>
             </div>
             <div className="px-6 py-4 border-t border-gray-100">
-              <button
-                onClick={() => setShowModal(false)}
-                className="w-full py-3 bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-xl font-medium transition-colors duration-200"
-              >
-                Cancel
-              </button>
+              {modalMode === "intro" && !gameStarted && (
+                <button
+                  onClick={startGame}
+                  className="w-full py-3 bg-red-500 hover:bg-red-600 text-white rounded-xl font-medium transition-colors duration-200"
+                >
+                  Start Game
+                </button>
+              )}
+              {/* No Cancel for "guess" mode */}
             </div>
           </div>
         </div>
