@@ -17,7 +17,6 @@ export default function GamePage() {
   const getCharacterImage = (name) =>
     `http://localhost:3000/images/characters/${name.toLowerCase().replace(/\s+/g, "-")}.png`;
 
-
   const handleImageClick = (e) => {
     const svg = svgRef.current;
     const point = svg.createSVGPoint();
@@ -63,13 +62,12 @@ export default function GamePage() {
         setFeedback("incorrect");
       }
 
-      // Clean up state
+      // Clean up
       setShowModal(false);
       setCircle(null);
       setSelected({});
       setPercentCoords(null);
 
-      // Hide feedback after 3 seconds
       setTimeout(() => setFeedback(null), 3000);
     } catch (err) {
       console.error("❌ Error validating click:", err);
@@ -77,13 +75,10 @@ export default function GamePage() {
   };
 
   return (
-    <div className="flex flex-col items-center w-full">
-      <h1 className="text-xl font-bold mb-2">AI Slop Challenge: Find The Characters</h1>
+    <div className="flex flex-col items-center w-full p-4">
+      <h1 className="text-2xl font-bold mb-4 text-center">AI Slop Challenge: Find The Characters</h1>
 
-      <div
-        className="w-full"
-        style={{ maxWidth: "900px", aspectRatio: `${SVG_WIDTH} / ${SVG_HEIGHT}` }}
-      >
+      <div className="w-full" style={{ maxWidth: "900px", aspectRatio: `${SVG_WIDTH} / ${SVG_HEIGHT}` }}>
         <svg
           ref={svgRef}
           viewBox={`0 0 ${SVG_WIDTH} ${SVG_HEIGHT}`}
@@ -97,10 +92,7 @@ export default function GamePage() {
             backgroundPosition: "center",
             cursor: "crosshair",
             borderRadius: "1rem",
-            boxShadow: "0 4px 12px rgba(0,0,0,0.06)",
-            width: "100%",
-            height: "100%",
-            aspectRatio: `${SVG_WIDTH}/${SVG_HEIGHT}`
+            boxShadow: "0 4px 12px rgba(0,0,0,0.06)"
           }}
           onClick={handleImageClick}
         >
@@ -114,8 +106,22 @@ export default function GamePage() {
                 strokeWidth="3"
                 fill="rgba(255,0,0,0.2)"
               />
-              <line x1={circle.x - 15} y1={circle.y} x2={circle.x + 15} y2={circle.y} stroke="red" strokeWidth="2" />
-              <line x1={circle.x} y1={circle.y - 15} x2={circle.x} y2={circle.y + 15} stroke="red" strokeWidth="2" />
+              <line
+                x1={circle.x - 15}
+                y1={circle.y}
+                x2={circle.x + 15}
+                y2={circle.y}
+                stroke="red"
+                strokeWidth="2"
+              />
+              <line
+                x1={circle.x}
+                y1={circle.y - 15}
+                x2={circle.x}
+                y2={circle.y + 15}
+                stroke="red"
+                strokeWidth="2"
+              />
             </>
           )}
         </svg>
@@ -133,46 +139,86 @@ export default function GamePage() {
         </div>
       )}
 
+      {/* Modal Overlay */}
       {showModal && (
-        <div className="mt-6 p-4 bg-white rounded-xl shadow-lg border border-gray-200 w-[300px]">
-          <h2 className="text-lg font-semibold mb-3">Who did you find?</h2>
-          <form>
-            {characters.map((char) => (
-              <label
-                key={char}
-                className="flex items-center gap-3 mb-3 cursor-pointer"
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-2xl shadow-2xl w-full max-w-md mx-auto transform transition-all duration-300 scale-100 animate-in fade-in-0 slide-in-from-bottom-4">
+            {/* Modal Header */}
+            <div className="px-6 py-4 border-b border-gray-100">
+              <h2 className="text-xl font-semibold text-gray-800 text-center">
+                Who did you find?
+              </h2>
+            </div>
+
+            {/* Modal Content */}
+            <div className="p-6">
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                {characters.map((char) => {
+                  const isFound = foundCharacters.includes(char);
+                  const isSelected = selected[char];
+                  
+                  return (
+                    <button
+                      key={char}
+                      disabled={isFound}
+                      onClick={() => {
+                        if (!isFound) {
+                          setSelected({ [char]: true });
+                          validateCharacterSelection(char);
+                        }
+                      }}
+                      className={`
+                        relative flex flex-col items-center p-4 rounded-xl border-2 transition-all duration-200 
+                        ${isFound 
+                          ? 'opacity-50 cursor-not-allowed border-gray-200 bg-gray-50' 
+                          : 'hover:border-red-400 hover:shadow-md cursor-pointer border-gray-200 bg-white hover:bg-red-50'
+                        }
+                        ${isSelected ? 'border-red-500 bg-red-50' : ''}
+                      `}
+                    >
+                      {/* Character Image */}
+                      <div className="relative mb-3">
+                        <img
+                          src={getCharacterImage(char)}
+                          alt={char}
+                          className="w-16 h-16 object-cover rounded-lg border border-gray-200"
+                          onError={(e) => (e.target.style.display = "none")}
+                        />
+                        {isFound && (
+                          <div className="absolute inset-0 bg-green-500 bg-opacity-20 rounded-lg flex items-center justify-center">
+                            <span className="text-green-600 text-xl font-bold">✓</span>
+                          </div>
+                        )}
+                      </div>
+
+                      {/* Character Name */}
+                      <span className={`
+                        text-sm font-medium text-center leading-tight
+                        ${isFound ? 'line-through text-gray-400' : 'text-gray-700'}
+                      `}>
+                        {char}
+                      </span>
+
+                      {/* Hover Effect Indicator */}
+                      {!isFound && (
+                        <div className="absolute inset-0 rounded-xl bg-red-500 bg-opacity-0 transition-all duration-200 hover:bg-opacity-5" />
+                      )}
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+
+            {/* Modal Footer */}
+            <div className="px-6 py-4 border-t border-gray-100">
+              <button
+                onClick={() => setShowModal(false)}
+                className="w-full py-3 bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-xl font-medium transition-colors duration-200"
               >
-                <input
-                  type="checkbox"
-                  checked={!!selected[char]}
-                  disabled={foundCharacters.includes(char)}
-                  onChange={() => {
-                    if (!foundCharacters.includes(char)) {
-                      setSelected({ [char]: true });
-                      validateCharacterSelection(char);
-                    }
-                  }}
-                  className="accent-red-500"
-                />
-                <img
-                  src={getCharacterImage(char)}
-                  alt={char}
-                  className="w-10 h-10 object-contain rounded border"
-                  onError={(e) => (e.target.style.display = "none")}
-                />
-                <span className={foundCharacters.includes(char) ? "line-through text-gray-400" : ""}>
-                  {char}
-                </span>
-              </label>
-            ))}
-          </form>
-          <button
-            className="mt-4 px-4 py-1 rounded bg-red-500 text-white font-bold hover:bg-red-600"
-            onClick={() => setShowModal(false)}
-            type="button"
-          >
-            Cancel
-          </button>
+                Cancel
+              </button>
+            </div>
+          </div>
         </div>
       )}
     </div>
