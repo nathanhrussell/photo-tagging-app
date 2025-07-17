@@ -11,10 +11,8 @@ export default function GamePage() {
   const [circle, setCircle] = useState(null);
   const [percentCoords, setPercentCoords] = useState(null);
 
-  // Modal logic
-  // modalMode: "intro" | "guess"
-  const [showModal, setShowModal] = useState(true);
-  const [modalMode, setModalMode] = useState("intro");
+  // Modal logic - always show modal, just change title
+  const [hasClickedOnce, setHasClickedOnce] = useState(false);
 
   const [selected, setSelected] = useState({});
   const [feedback, setFeedback] = useState(null);
@@ -44,8 +42,7 @@ export default function GamePage() {
     setCircle({ x: svgPoint.x, y: svgPoint.y });
     setPercentCoords({ x: xPercent, y: yPercent });
     setSelected({});
-    setModalMode("guess");
-    setShowModal(true);
+    setHasClickedOnce(true);
   };
 
   // Handles user selecting a character from the guess modal
@@ -75,12 +72,13 @@ export default function GamePage() {
           ...prev,
           { name: characterName, x: circle.x, y: circle.y }
         ]);
+        // Clear circle after correct guess
+        setCircle(null);
       } else {
         setFeedback("incorrect");
+        // Keep circle for incorrect guesses
       }
 
-      setShowModal(false);
-      setCircle(null);
       setSelected({});
       setPercentCoords(null);
       setTimeout(() => setFeedback(null), 3000);
@@ -198,82 +196,83 @@ export default function GamePage() {
         </div>
       )}
 
-      {/* Modal (intro OR guess) */}
-      {showModal && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-          <div className="bg-white rounded-2xl shadow-2xl w-full max-w-md mx-auto transition-all duration-300">
-            <div className="px-6 py-4 border-b border-gray-100">
-              <h2 className="text-xl font-semibold text-gray-800 text-center">
-                {modalMode === "intro"
-                  ? "Find these characters"
-                  : "Who did you find?"}
-              </h2>
-            </div>
-            <div className="p-6">
-              <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-                {characters.map((char) => {
-                  const isFound = foundCharacters.includes(char);
-                  const isSelected = selected[char];
-                  return (
-                    <button
-                      key={char}
-                      disabled={
-                        (modalMode === "intro") || isFound
+      {/* Modal - Always visible */}
+      <div className={`fixed inset-0 flex items-center justify-center z-50 p-4 ${
+        feedback ? 'bg-transparent' : 'bg-black bg-opacity-50'
+      }`}>
+        <div className={`bg-white rounded-2xl shadow-2xl w-full max-w-md mx-auto transition-all duration-300 ${
+          feedback ? 'mt-20' : ''
+        }`}>
+          <div className="px-6 py-4 border-b border-gray-100">
+            <h2 className="text-xl font-semibold text-gray-800 text-center">
+              {!gameStarted || !hasClickedOnce
+                ? "Find these characters"
+                : "Who did you find?"}
+            </h2>
+          </div>
+          <div className="p-6">
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+              {characters.map((char) => {
+                const isFound = foundCharacters.includes(char);
+                const isSelected = selected[char];
+                const canClick = gameStarted && hasClickedOnce && !isFound;
+                return (
+                  <button
+                    key={char}
+                    disabled={!canClick}
+                    onClick={() => {
+                      if (canClick) {
+                        setSelected({ [char]: true });
+                        validateCharacterSelection(char);
                       }
-                      onClick={() => {
-                        if (modalMode === "guess" && !isFound) {
-                          setSelected({ [char]: true });
-                          validateCharacterSelection(char);
-                        }
-                      }}
-                      className={`
-                        relative flex flex-col items-center p-4 rounded-xl border-2 transition-all duration-200 
-                        ${isFound 
-                          ? "opacity-50 cursor-not-allowed border-gray-200 bg-gray-50"
-                          : modalMode === "intro"
-                          ? "opacity-70 cursor-not-allowed"
-                          : "hover:border-red-400 hover:shadow-md cursor-pointer border-gray-200 bg-white hover:bg-red-50"
-                        }
-                        ${isSelected ? "border-red-500 bg-red-50" : ""}
-                      `}
-                    >
-                      <div className="relative mb-3">
-                        <img
-                          src={getCharacterImage(char)}
-                          alt={char}
-                          className="w-16 h-16 object-cover rounded-lg border border-gray-200"
-                          onError={(e) => (e.target.style.display = "none")}
-                        />
-                        {isFound && (
-                          <div className="absolute inset-0 bg-green-500 bg-opacity-20 rounded-lg flex items-center justify-center">
-                            <span className="text-green-600 text-xl font-bold">✓</span>
-                          </div>
-                        )}
-                      </div>
-                      <span className={`text-sm font-medium text-center leading-tight ${
-                        isFound ? "line-through text-gray-400" : "text-gray-700"
-                      }`}>
-                        {char}
-                      </span>
-                    </button>
-                  );
-                })}
-              </div>
-            </div>
-            <div className="px-6 py-4 border-t border-gray-100">
-              {modalMode === "intro" && !gameStarted && (
-                <button
-                  onClick={startGame}
-                  className="w-full py-3 bg-red-500 hover:bg-red-600 text-white rounded-xl font-medium transition-colors duration-200"
-                >
-                  Start Game
-                </button>
-              )}
-              {/* No Cancel for "guess" mode */}
+                    }}
+                    className={`
+                      relative flex flex-col items-center p-4 rounded-xl border-2 transition-all duration-200 
+                      ${isFound 
+                        ? "opacity-50 cursor-not-allowed border-gray-200 bg-gray-50"
+                        : canClick
+                        ? "hover:border-red-400 hover:shadow-md cursor-pointer border-gray-200 bg-white hover:bg-red-50"
+                        : "opacity-70 cursor-not-allowed border-gray-200 bg-gray-50"
+                      }
+                      ${isSelected ? "border-red-500 bg-red-50" : ""}
+                    `}
+                  >
+                    <div className="relative mb-3">
+                      <img
+                        src={getCharacterImage(char)}
+                        alt={char}
+                        className="w-16 h-16 object-cover rounded-lg border border-gray-200"
+                        onError={(e) => (e.target.style.display = "none")}
+                      />
+                      {isFound && (
+                        <div className="absolute inset-0 bg-green-500 bg-opacity-20 rounded-lg flex items-center justify-center">
+                          <span className="text-green-600 text-xl font-bold">✓</span>
+                        </div>
+                      )}
+                    </div>
+                    <span className={`text-sm font-medium text-center leading-tight ${
+                      isFound ? "line-through text-gray-400" : "text-gray-700"
+                    }`}>
+                      {char}
+                    </span>
+                  </button>
+                );
+              })}
             </div>
           </div>
+          <div className="px-6 py-4 border-t border-gray-100">
+            {!gameStarted && (
+              <button
+                onClick={startGame}
+                className="w-full py-3 bg-red-500 hover:bg-red-600 text-white rounded-xl font-medium transition-colors duration-200"
+              >
+                Start Game
+              </button>
+            )}
+            {/* No Cancel for "guess" mode */}
+          </div>
         </div>
-      )}
+      </div>
     </div>
   );
 }
