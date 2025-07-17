@@ -14,6 +14,10 @@ export default function GamePage() {
   const [feedback, setFeedback] = useState(null);
   const [foundCharacters, setFoundCharacters] = useState([]);
 
+  const getCharacterImage = (name) =>
+    `http://localhost:3000/images/characters/${name.toLowerCase().replace(/\s+/g, "-")}.png`;
+
+
   const handleImageClick = (e) => {
     const svg = svgRef.current;
     const point = svg.createSVGPoint();
@@ -59,13 +63,13 @@ export default function GamePage() {
         setFeedback("incorrect");
       }
 
-      // Clear selection and circle
+      // Clean up state
       setShowModal(false);
       setCircle(null);
       setSelected({});
       setPercentCoords(null);
 
-      // Remove feedback after delay
+      // Hide feedback after 3 seconds
       setTimeout(() => setFeedback(null), 3000);
     } catch (err) {
       console.error("❌ Error validating click:", err);
@@ -78,10 +82,7 @@ export default function GamePage() {
 
       <div
         className="w-full"
-        style={{
-          maxWidth: "900px",
-          aspectRatio: `${SVG_WIDTH} / ${SVG_HEIGHT}`
-        }}
+        style={{ maxWidth: "900px", aspectRatio: `${SVG_WIDTH} / ${SVG_HEIGHT}` }}
       >
         <svg
           ref={svgRef}
@@ -113,22 +114,8 @@ export default function GamePage() {
                 strokeWidth="3"
                 fill="rgba(255,0,0,0.2)"
               />
-              <line
-                x1={circle.x - 15}
-                y1={circle.y}
-                x2={circle.x + 15}
-                y2={circle.y}
-                stroke="red"
-                strokeWidth="2"
-              />
-              <line
-                x1={circle.x}
-                y1={circle.y - 15}
-                x2={circle.x}
-                y2={circle.y + 15}
-                stroke="red"
-                strokeWidth="2"
-              />
+              <line x1={circle.x - 15} y1={circle.y} x2={circle.x + 15} y2={circle.y} stroke="red" strokeWidth="2" />
+              <line x1={circle.x} y1={circle.y - 15} x2={circle.x} y2={circle.y + 15} stroke="red" strokeWidth="2" />
             </>
           )}
         </svg>
@@ -153,7 +140,7 @@ export default function GamePage() {
             {characters.map((char) => (
               <label
                 key={char}
-                className="flex items-center space-x-2 mb-2 cursor-pointer"
+                className="flex items-center gap-3 mb-3 cursor-pointer"
               >
                 <input
                   type="checkbox"
@@ -167,13 +154,13 @@ export default function GamePage() {
                   }}
                   className="accent-red-500"
                 />
-                <span
-                  className={
-                    foundCharacters.includes(char)
-                      ? "line-through text-gray-400"
-                      : ""
-                  }
-                >
+                <img
+                  src={getCharacterImage(char)}
+                  alt={char}
+                  className="w-10 h-10 object-contain rounded border"
+                  onError={(e) => (e.target.style.display = "none")}
+                />
+                <span className={foundCharacters.includes(char) ? "line-through text-gray-400" : ""}>
                   {char}
                 </span>
               </label>
