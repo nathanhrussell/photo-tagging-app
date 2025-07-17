@@ -9,6 +9,14 @@ const app = express();
 const prisma = new PrismaClient();
 const PORT = process.env.PORT || 3000;
 
+app.use(express.json());
+
+app.use(cors({
+  origin: "http://localhost:5173",
+  credentials: true
+}));
+
+
 app.get("/api/levels/:id/characters", async (req, res) => {
   const levelId = parseInt(req.params.id);
   try {
@@ -61,7 +69,6 @@ app.post("/api/validate-click", async (req, res) => {
 
 
 app.use(cors());
-app.use(express.json());
 app.use("/images", express.static("public"));
 
 app.get("/api/test", (req, res) => {

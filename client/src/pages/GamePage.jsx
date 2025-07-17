@@ -6,11 +6,13 @@ const SVG_WIDTH = 1152;
 const SVG_HEIGHT = 768;
 const characters = ["Waldo", "Sunhat Girl", "Stroller Baby"];
 
-export default function PlaygroundTarget() {
+export default function GamePage() {
   const svgRef = useRef(null);
   const [circle, setCircle] = useState(null);
+  const [percentCoords, setPercentCoords] = useState(null);
   const [showModal, setShowModal] = useState(false);
   const [selected, setSelected] = useState({});
+  const [feedback, setFeedback] = useState(null); // "correct" | "incorrect"
 
   const handleImageClick = (e) => {
     const svg = svgRef.current;
@@ -22,33 +24,51 @@ export default function PlaygroundTarget() {
     const xPercent = (svgPoint.x / SVG_WIDTH) * 100;
     const yPercent = (svgPoint.y / SVG_HEIGHT) * 100;
 
-    console.log("🎯 Raw SVG coords:", svgPoint);
-    console.log("📐 Normalised (%):", {
-      x: xPercent.toFixed(2),
-      y: yPercent.toFixed(2),
-    });
-
     setCircle({ x: svgPoint.x, y: svgPoint.y });
+    setPercentCoords({ x: xPercent, y: yPercent });
     setShowModal(true);
     setSelected({});
   };
 
+  const validateCharacterSelection = async (characterName) => {
+    if (!percentCoords) return;
 
-  const handleCheckboxChange = (name) => {
-    setSelected((prev) => ({
-      ...prev,
-      [name]: !prev[name],
-    }));
+    try {
+      const res = await fetch("http://localhost:3000/api/validate-click", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          levelId: 1,
+          character: characterName,
+          x: percentCoords.x,
+          y: percentCoords.y
+        })
+      });
+
+      const data = await res.json();
+      if (data.correct) {
+        setFeedback("correct");
+      } else {
+        setFeedback("incorrect");
+      }
+
+      setTimeout(() => setFeedback(null), 3000);
+      setShowModal(false);
+      setCircle(null);
+    } catch (err) {
+      console.error("❌ Error validating click:", err);
+    }
   };
 
   return (
     <div className="flex flex-col items-center w-full">
       <h1 className="text-xl font-bold mb-2">AI Slop Challenge: Find The Characters</h1>
+
       <div
         className="w-full"
         style={{
           maxWidth: "900px",
-          aspectRatio: `${SVG_WIDTH} / ${SVG_HEIGHT}`,
+          aspectRatio: `${SVG_WIDTH} / ${SVG_HEIGHT}`
         }}
       >
         <svg
@@ -59,7 +79,7 @@ export default function PlaygroundTarget() {
           style={{
             display: "block",
             backgroundImage: `url("${IMAGE_SRC}")`,
-            backgroundSize: "contain", // <- this ensures NO cropping!
+            backgroundSize: "contain",
             backgroundRepeat: "no-repeat",
             backgroundPosition: "center",
             cursor: "crosshair",
@@ -67,7 +87,7 @@ export default function PlaygroundTarget() {
             boxShadow: "0 4px 12px rgba(0,0,0,0.06)",
             width: "100%",
             height: "100%",
-            aspectRatio: `${SVG_WIDTH}/${SVG_HEIGHT}`, // CSS fallback
+            aspectRatio: `${SVG_WIDTH}/${SVG_HEIGHT}`
           }}
           onClick={handleImageClick}
         >
@@ -101,6 +121,13 @@ export default function PlaygroundTarget() {
           )}
         </svg>
       </div>
+
+      {feedback && (
+        <div className="mt-4 text-lg font-bold">
+          {feedback === "correct" ? "✅ Correct!" : "❌ Not quite. Try again!"}
+        </div>
+      )}
+
       {showModal && (
         <div className="mt-6 p-4 bg-white rounded-xl shadow-lg border border-gray-200 w-[300px]">
           <h2 className="text-lg font-semibold mb-3">Who did you find?</h2>
@@ -113,7 +140,10 @@ export default function PlaygroundTarget() {
                 <input
                   type="checkbox"
                   checked={!!selected[char]}
-                  onChange={() => handleCheckboxChange(char)}
+                  onChange={() => {
+                    setSelected({ [char]: true });
+                    validateCharacterSelection(char);
+                  }}
                   className="accent-red-500"
                 />
                 <span>{char}</span>
@@ -125,7 +155,7 @@ export default function PlaygroundTarget() {
             onClick={() => setShowModal(false)}
             type="button"
           >
-            Done
+            Cancel
           </button>
         </div>
       )}
