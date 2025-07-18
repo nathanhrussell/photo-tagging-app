@@ -1,40 +1,25 @@
-import { useEffect, useState } from "react";
-import { Link } from "react-router-dom";
+import { useNavigate } from "react-router-dom";
 
 export default function HomePage() {
-  const [levels, setLevels] = useState([]);
+  const navigate = useNavigate();
 
-  useEffect(() => {
-    setLevels([
-      {
-        id: 1,
-        name: "Test Level 1",
-        image: "level1.png"
-      }
-    ]);
-  }, []);
+  const handleStart = () => {
+    navigate("/game/1");
+  };
 
   return (
-    <div className="min-h-screen bg-gray-900 text-white p-8">
+    <div className="min-h-screen bg-gray-900 text-white p-8 flex flex-col items-center justify-center text-center">
       <h1 className="text-4xl font-bold mb-6">🔍 Find The Characters in AI Slop</h1>
-      <p className="mb-4">Select a level to start:</p>
-
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-        {levels.map((level) => (
-        <Link
-            key={level.id}
-            to={`/game/${level.id}`}
-            className="bg-gray-800 hover:bg-gray-700 rounded-xl p-4 transition"
-        >
-            <img
-            src={`http://localhost:3000/images/${level.image}`}
-            alt={level.name}
-            className="w-full h-48 object-cover rounded-lg mb-3"
-            />
-            <h2 className="text-xl font-semibold">{level.name}</h2>
-        </Link>
-        ))}
-      </div>
+      <p className="mb-6 max-w-xl text-lg">
+        Welcome to the AI Slop Challenge! In each level, your task is to locate three hidden characters as quickly as possible. 
+        Use your observational skills to find them in chaotic, AI-generated scenes. Click their location, then choose who you think it is.
+      </p>
+      <button
+        onClick={handleStart}
+        className="mt-4 px-8 py-4 bg-red-600 hover:bg-red-700 text-white rounded-xl text-lg font-semibold shadow-lg"
+      >
+        Start Level 1
+      </button>
     </div>
   );
 }
