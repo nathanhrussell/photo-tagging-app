@@ -10,13 +10,15 @@ const app = express();
 const prisma = new PrismaClient();
 const PORT = process.env.PORT || 3000;
 
-app.use(express.json());
-app.use("/api", gameRoutes); // <-- use imported routes here!
-
 app.use(cors({
   origin: ["http://localhost:5173", "http://127.0.0.1:5173"],
   credentials: true
 }));
+
+app.use(express.json());
+app.use("/api", gameRoutes);
+
+app.use("/images", express.static("public"));
 
 app.get("/api/levels/:id/characters", async (req, res) => {
   const levelId = parseInt(req.params.id);

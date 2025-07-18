@@ -1,9 +1,11 @@
 import React, { useRef, useState, useEffect } from "react";
 
-const IMAGE_SRC = "http://localhost:3000/images/level1.png";
+const levelId = 1;
+const IMAGE_SRC = `http://localhost:3000/images/level${levelId}.png`;
 const SVG_WIDTH = 1152;
 const SVG_HEIGHT = 768;
 const characters = ["Character 1", "Character 2", "Character 3"];
+
 
 function formatTime(seconds) {
   const mins = Math.floor(seconds / 60)
@@ -59,8 +61,11 @@ export default function GamePage() {
     setTimerActive(false);
   }, []);
 
-  const getCharacterImage = (name) =>
-    `http://localhost:3000/images/characters/${name.toLowerCase().replace(/\s+/g, "-")}.png`;
+  const getCharacterImage = (name) => {
+    const charIndex = characters.indexOf(name) + 1;
+    return `http://localhost:3000/images/characters/level${levelId}char${charIndex}.png`;
+  };
+
 
   // Handles a user clicking on the image to make a guess
   const handleImageClick = (e) => {
