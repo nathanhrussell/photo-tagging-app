@@ -4,32 +4,32 @@ const prisma = new PrismaClient();
 async function main() {
   await prisma.character.createMany({
     data: [
-        {
-        name: "The Jousting Knight",
-        x: 42.5,
-        y: 66.5,
-        width: 10.5,
-        height: 15.0,
-        levelId: 3
-        },
-        {
-        name: "The Goose",
-        x: 69.8,
-        y: 79.0,
-        width: 3.5,
-        height: 6.0,
-        levelId: 3
-        },
-        {
+      {
         name: "The King on the Tower",
-        x: 26.5,
-        y: 12.0,
-        width: 4.5,
-        height: 9.0,
+        x: 22.1,
+        y: 3.6,
+        width: 6.2,
+        height: 14.2,
         levelId: 3
-        }
+      },
+      {
+        name: "The Jousting Knight",
+        x: 50.5,
+        y: 57.7,
+        width: 8.2,
+        height: 21.2,
+        levelId: 3
+      },
+      {
+        name: "The Goose",
+        x: 42.3,
+        y: 84.8,
+        width: 4.9,
+        height: 12.4,
+        levelId: 3
+      }
     ]
-    });
+  });
 
   console.log("✅ Level 3 characters inserted!");
 }

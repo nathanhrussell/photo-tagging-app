@@ -4,32 +4,32 @@ const prisma = new PrismaClient();
 async function main() {
   await prisma.character.createMany({
     data: [
-        {
-        name: "Wheelbarrow Worker",
-        x: 89.4,
-        y: 80.6,
-        width: 5.5,
-        height: 11.5,
-        levelId: 4
-        },
-        {
-        name: "Excavator Operator",
-        x: 18.3,
-        y: 60.5,
-        width: 5.0,
-        height: 8.5,
-        levelId: 4
-        },
-        {
+      {
         name: "Brick Carrier",
-        x: 49.7,
-        y: 72.8,
-        width: 4.8,
-        height: 11.2,
+        x: 4.1,
+        y: 75.8,
+        width: 5.3,
+        height: 18.5,
         levelId: 4
-        }
+      },
+      {
+        name: "Excavator Operator",
+        x: 32.1,
+        y: 52.6,
+        width: 7.4,
+        height: 20.7,
+        levelId: 4
+      },
+      {
+        name: "Wheelbarrow Worker",
+        x: 77.1,
+        y: 77.3,
+        width: 8.9,
+        height: 20.1,
+        levelId: 4
+      }
     ]
-    });
+  });
 
   console.log("✅ Level 4 characters inserted!");
 }
