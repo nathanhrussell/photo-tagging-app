@@ -21,28 +21,28 @@ const levelDetails = {
     image: "/images/level1.png",
     characters: [
       {
-        name: "Waldo",
+        name: "Character 1",
         x: 23.1,
         y: 55.2,
         width: 3.2,
         height: 5.1,
-        thumbnail: "/images/characters/waldo.png"
+        thumbnail: "/images/characters/character1.png"
       },
       {
-        name: "Sunhat Girl",
+        name: "Character 2",
         x: 40.5,
         y: 30.2,
         width: 2.7,
         height: 4.9,
-        thumbnail: "/images/characters/sunhat-girl.png"
+        thumbnail: "/images/characters/character2.png"
       },
       {
-        name: "Stroller Baby",
+        name: "Character 3",
         x: 65.2,
         y: 75.8,
         width: 2.9,
         height: 3.3,
-        thumbnail: "/images/characters/stroller-baby.png"
+        thumbnail: "/images/characters/character3.png"
       }
     ]
   }

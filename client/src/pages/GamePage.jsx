@@ -3,7 +3,7 @@ import React, { useRef, useState, useEffect } from "react";
 const IMAGE_SRC = "http://localhost:3000/images/level1.png";
 const SVG_WIDTH = 1152;
 const SVG_HEIGHT = 768;
-const characters = ["Waldo", "Sunhat Girl", "Stroller Baby"];
+const characters = ["Character 1", "Character 2", "Character 3"];
 
 function formatTime(seconds) {
   const mins = Math.floor(seconds / 60)
