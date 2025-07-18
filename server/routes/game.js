@@ -1,4 +1,4 @@
-const express = require("express");
+import express from "express";
 const router = express.Router();
 
 // --- Static sample data for demo/testing ---
@@ -118,4 +118,4 @@ router.get("/scores/:levelId", (req, res) => {
   res.json(scores.slice(0, 20));
 });
 
-module.exports = router;
+export default router;
