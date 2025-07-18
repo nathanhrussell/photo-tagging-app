@@ -72,7 +72,6 @@ router.get("/levels/:id", (req, res) => {
   res.json(level);
 });
 
-// POST /validate-click
 router.post("/validate-click", (req, res) => {
   const { levelId, character, x, y } = req.body;
   const level = levelDetails[levelId];
@@ -80,18 +79,32 @@ router.post("/validate-click", (req, res) => {
 
   // Find the character
   const char = level.characters.find((c) => c.name === character);
-  if (!char) return res.json({ correct: false });
+  if (!char) {
+    console.log("Character not found:", character);
+    return res.json({ correct: false });
+  }
 
-  // Simple hitbox check (adjust as needed: px, %, etc)
-  // Assume x/y are in percentage
-  const inBox =
-    x >= char.x &&
-    x <= char.x + char.width &&
-    y >= char.y &&
-    y <= char.y + char.height;
+  // Ensure numbers
+  const userX = Number(x);
+  const userY = Number(y);
+  const charX = Number(char.x);
+  const charY = Number(char.y);
 
-  res.json({ correct: inBox });
+  // Use a distance-based tolerance (increase if needed)
+  const tolerance = 5;
+
+  const dx = userX - charX;
+  const dy = userY - charY;
+  const distance = Math.sqrt(dx * dx + dy * dy);
+
+  console.log(
+    `User click: (${userX}, ${userY}) | Target: (${charX}, ${charY}) | Distance: ${distance} | Tolerance: ${tolerance}`
+  );
+
+  res.json({ correct: distance <= tolerance });
 });
+
+
 
 // POST /scores
 router.post("/scores", (req, res) => {
