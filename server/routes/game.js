@@ -29,15 +29,14 @@ router.get("/levels/:id", async (req, res) => {
       select: {
         id: true,
         name: true,
-        image: true,
+        imageUrl: true,
         characters: {
           select: {
             name: true,
             x: true,
             y: true,
             width: true,
-            height: true,
-            thumbnail: true
+            height: true
           }
         }
       }
@@ -45,9 +44,11 @@ router.get("/levels/:id", async (req, res) => {
     if (!level) return res.status(404).json({ error: "Level not found" });
     res.json(level);
   } catch (err) {
+    console.error("❌ Backend error in /api/levels/:id", err.message, err.stack);
     res.status(500).json({ error: "Failed to load level data" });
   }
 });
+
 
 // POST /validate-click
 router.post("/validate-click", async (req, res) => {

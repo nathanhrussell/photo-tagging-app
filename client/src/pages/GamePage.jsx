@@ -1,76 +1,68 @@
-import React, { useRef, useState, useEffect } from "react";
+import { useRef, useState, useEffect } from "react";
+import { useParams } from "react-router-dom";
 
-const levelId = 1;
-const IMAGE_SRC = `http://localhost:3000/images/level${levelId}.png`;
 const SVG_WIDTH = 1152;
 const SVG_HEIGHT = 768;
-const characters = ["Character 1", "Character 2", "Character 3"];
-
 
 function formatTime(seconds) {
-  const mins = Math.floor(seconds / 60)
-    .toString()
-    .padStart(2, "0");
+  const mins = Math.floor(seconds / 60).toString().padStart(2, "0");
   const secs = (seconds % 60).toString().padStart(2, "0");
   return `${mins}:${secs}`;
 }
 
 export default function GamePage() {
+  const { levelId } = useParams();
   const svgRef = useRef(null);
+  const [levelData, setLevelData] = useState(null);
   const [gameStarted, setGameStarted] = useState(false);
   const [circle, setCircle] = useState(null);
   const [percentCoords, setPercentCoords] = useState(null);
-
-  // Modal logic - always show modal, just change title
   const [hasClickedOnce, setHasClickedOnce] = useState(false);
-
   const [selected, setSelected] = useState({});
   const [feedback, setFeedback] = useState(null);
   const [foundCharacters, setFoundCharacters] = useState([]);
   const [foundMarkers, setFoundMarkers] = useState([]);
-
-  // Timer logic
   const [elapsed, setElapsed] = useState(0);
   const [timerActive, setTimerActive] = useState(false);
 
-  // Start timer on game start, stop on all found
+  useEffect(() => {
+    fetch(`http://localhost:3000/api/levels/${levelId}`)
+      .then((res) => res.json())
+      .then((data) => setLevelData(data))
+      .catch((err) => console.error("Failed to load level data", err));
+  }, [levelId]);
+
   useEffect(() => {
     let interval;
-    if (gameStarted && !timerActive && foundCharacters.length < characters.length) {
+    if (gameStarted && !timerActive && foundCharacters.length < 3) {
       setTimerActive(true);
     }
-    if (timerActive && foundCharacters.length < characters.length) {
+    if (timerActive && foundCharacters.length < 3) {
       interval = setInterval(() => setElapsed((t) => t + 1), 1000);
     }
-    if (foundCharacters.length === characters.length && timerActive) {
+    if (foundCharacters.length === 3 && timerActive) {
       setTimerActive(false);
     }
     return () => clearInterval(interval);
   }, [gameStarted, timerActive, foundCharacters.length]);
 
-  // Stop timer and prevent further ticks
   useEffect(() => {
-    if (foundCharacters.length === characters.length) {
+    if (foundCharacters.length === 3) {
       setTimerActive(false);
     }
   }, [foundCharacters.length]);
 
-  // Reset everything on reload
   useEffect(() => {
     setElapsed(0);
     setTimerActive(false);
   }, []);
 
-  const getCharacterImage = (name) => {
-    const charIndex = characters.indexOf(name) + 1;
-    return `http://localhost:3000/images/characters/level${levelId}char${charIndex}.png`;
-  };
+  const getCharacterImage = (index) =>
+    `http://localhost:3000/images/characters/level${levelId}char${index + 1}.png`;
 
-
-  // Handles a user clicking on the image to make a guess
   const handleImageClick = (e) => {
-    if (foundCharacters.length === characters.length) return;
-    setFeedback(null); // clear feedback on every new guess
+    if (foundCharacters.length === 3) return;
+    setFeedback(null);
 
     const svg = svgRef.current;
     const point = svg.createSVGPoint();
@@ -87,12 +79,11 @@ export default function GamePage() {
     setHasClickedOnce(true);
   };
 
-  // Handles user selecting a character from the guess modal
   const validateCharacterSelection = async (characterName) => {
     if (!percentCoords || !circle) return;
 
     const payload = {
-      levelId: 1,
+      levelId: parseInt(levelId),
       character: characterName,
       x: percentCoords.x,
       y: percentCoords.y
@@ -110,52 +101,42 @@ export default function GamePage() {
       if (data.correct) {
         setFeedback("correct");
         setFoundCharacters((prev) => [...prev, characterName]);
-        setFoundMarkers((prev) => [
-          ...prev,
-          { name: characterName, x: circle.x, y: circle.y }
-        ]);
-        setCircle(null); // clear circle after correct guess
+        setFoundMarkers((prev) => [...prev, { name: characterName, x: circle.x, y: circle.y }]);
+        setCircle(null);
       } else {
         setFeedback("incorrect");
-        // Keep circle for incorrect guesses
       }
 
       setSelected({});
       setPercentCoords(null);
-      // Feedback stays until replaced
     } catch (err) {
       console.error("❌ Error validating click:", err);
     }
   };
 
-  // Handles clicking "Start Game"
   const startGame = () => {
     setGameStarted(true);
     setElapsed(0);
     setTimerActive(true);
-    // setTimerStarted(true); // (Not needed)
   };
+
+  if (!levelData) return <div className="text-white p-8">Loading...</div>;
 
   return (
     <div className="flex flex-col items-center w-full p-4">
       <h1 className="text-2xl font-bold mb-4 text-center">
-        AI Slop Challenge: Find The Characters
+        AI Slop Challenge: {levelData.name}
       </h1>
 
-      {/* Timer */}
       <div className="flex justify-center items-center gap-8 w-full max-w-xl mb-4">
         <div className="text-xl font-mono bg-gray-50 rounded-lg px-4 py-2 border shadow text-gray-800">
           Time: {formatTime(elapsed)}
         </div>
-        {/* Show “Well done” if all found */}
-        {foundCharacters.length === characters.length && (
-          <div className="text-green-700 font-semibold text-lg">
-            🎉 Well done!
-          </div>
+        {foundCharacters.length === 3 && (
+          <div className="text-green-700 font-semibold text-lg">🎉 Well done!</div>
         )}
       </div>
 
-      {/* Feedback message always fixed at top, high z-index */}
       {feedback && (
         <div className="fixed top-6 left-0 w-full flex justify-center z-[120] pointer-events-none">
           <div
@@ -165,9 +146,7 @@ export default function GamePage() {
                 : "bg-red-200 text-red-800"
             }`}
           >
-            {feedback === "correct"
-              ? "✅ Correct!"
-              : "❌ Not quite. Try again!"}
+            {feedback === "correct" ? "✅ Correct!" : "❌ Not quite. Try again!"}
           </div>
         </div>
       )}
@@ -180,109 +159,60 @@ export default function GamePage() {
           height="100%"
           style={{
             display: "block",
-            backgroundImage: `url("${IMAGE_SRC}")`,
+            backgroundImage: `url(http://localhost:3000${levelData.imageUrl})`,
             backgroundSize: "contain",
             backgroundRepeat: "no-repeat",
             backgroundPosition: "center",
             cursor:
-              gameStarted && foundCharacters.length !== characters.length
-                ? "crosshair"
-                : "default",
+              gameStarted && foundCharacters.length !== 3 ? "crosshair" : "default",
             borderRadius: "1rem",
             boxShadow: "0 4px 12px rgba(0,0,0,0.06)"
           }}
           onClick={gameStarted ? handleImageClick : undefined}
         >
-          {/* Permanent green markers */}
           {foundMarkers.map((marker) => (
             <g key={marker.name}>
-              <circle
-                cx={marker.x}
-                cy={marker.y}
-                r="20"
-                stroke="green"
-                strokeWidth="3"
-                fill="rgba(0,255,0,0.2)"
-              />
-              <line
-                x1={marker.x - 15}
-                y1={marker.y}
-                x2={marker.x + 15}
-                y2={marker.y}
-                stroke="green"
-                strokeWidth="2"
-              />
-              <line
-                x1={marker.x}
-                y1={marker.y - 15}
-                x2={marker.x}
-                y2={marker.y + 15}
-                stroke="green"
-                strokeWidth="2"
-              />
+              <circle cx={marker.x} cy={marker.y} r="20" stroke="green" strokeWidth="3" fill="rgba(0,255,0,0.2)" />
+              <line x1={marker.x - 15} y1={marker.y} x2={marker.x + 15} y2={marker.y} stroke="green" strokeWidth="2" />
+              <line x1={marker.x} y1={marker.y - 15} x2={marker.x} y2={marker.y + 15} stroke="green" strokeWidth="2" />
             </g>
           ))}
 
-          {/* Temporary red marker */}
           {circle && (
             <>
-              <circle
-                cx={circle.x}
-                cy={circle.y}
-                r="20"
-                stroke="red"
-                strokeWidth="3"
-                fill="rgba(255,0,0,0.2)"
-              />
-              <line
-                x1={circle.x - 15}
-                y1={circle.y}
-                x2={circle.x + 15}
-                y2={circle.y}
-                stroke="red"
-                strokeWidth="2"
-              />
-              <line
-                x1={circle.x}
-                y1={circle.y - 15}
-                x2={circle.x}
-                y2={circle.y + 15}
-                stroke="red"
-                strokeWidth="2"
-              />
+              <circle cx={circle.x} cy={circle.y} r="20" stroke="red" strokeWidth="3" fill="rgba(255,0,0,0.2)" />
+              <line x1={circle.x - 15} y1={circle.y} x2={circle.x + 15} y2={circle.y} stroke="red" strokeWidth="2" />
+              <line x1={circle.x} y1={circle.y - 15} x2={circle.x} y2={circle.y + 15} stroke="red" strokeWidth="2" />
             </>
           )}
         </svg>
       </div>
 
-      {/* Modal - Always visible */}
       <div className={`fixed inset-0 flex items-center justify-center z-50 p-4 ${
-        feedback ? 'bg-transparent' : 'bg-black bg-opacity-50'
+        feedback ? "bg-transparent" : "bg-black bg-opacity-50"
       }`}>
         <div className={`bg-white rounded-2xl shadow-2xl w-full max-w-md mx-auto transition-all duration-300 ${
-          feedback ? 'mt-20' : ''
+          feedback ? "mt-20" : ""
         }`}>
           <div className="px-6 py-4 border-b border-gray-100">
             <h2 className="text-xl font-semibold text-gray-800 text-center">
-              {!gameStarted || !hasClickedOnce
-                ? "Find these characters"
-                : "Who did you find?"}
+              {!gameStarted || !hasClickedOnce ? "Find these characters" : "Who did you find?"}
             </h2>
           </div>
           <div className="p-6">
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-              {characters.map((char) => {
-                const isFound = foundCharacters.includes(char);
-                const isSelected = selected[char];
+              {levelData.characters.map((char, index) => {
+                const isFound = foundCharacters.includes(char.name);
+                const isSelected = selected[char.name];
                 const canClick = gameStarted && hasClickedOnce && !isFound;
                 return (
                   <button
-                    key={char}
+                    key={char.name}
                     disabled={!canClick}
                     onClick={() => {
                       if (canClick) {
-                        setSelected({ [char]: true });
-                        validateCharacterSelection(char);
+                        setSelected({ [char.name]: true });
+                        validateCharacterSelection(char.name, index);
                       }
                     }}
                     className={`
@@ -298,8 +228,8 @@ export default function GamePage() {
                   >
                     <div className="relative mb-3">
                       <img
-                        src={getCharacterImage(char)}
-                        alt={char}
+                        src={getCharacterImage(index)}
+                        alt={char.name}
                         className="w-16 h-16 object-cover rounded-lg border border-gray-200"
                         onError={(e) => (e.target.style.display = "none")}
                       />
@@ -312,7 +242,7 @@ export default function GamePage() {
                     <span className={`text-sm font-medium text-center leading-tight ${
                       isFound ? "line-through text-gray-400" : "text-gray-700"
                     }`}>
-                      {char}
+                      {char.name}
                     </span>
                   </button>
                 );
@@ -328,7 +258,6 @@ export default function GamePage() {
                 Start Game
               </button>
             )}
-            {/* No Cancel for "guess" mode */}
           </div>
         </div>
       </div>
