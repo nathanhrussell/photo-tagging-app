@@ -15,6 +15,7 @@ export default function GamePage() {
   const navigate = useNavigate();
   const svgRef = useRef(null);
   const [levelData, setLevelData] = useState(null);
+  const [hitboxes, setHitboxes] = useState([]);
   const [gameStarted, setGameStarted] = useState(false);
   const [circle, setCircle] = useState(null);
   const [percentCoords, setPercentCoords] = useState(null);
@@ -27,12 +28,22 @@ export default function GamePage() {
   const [timerActive, setTimerActive] = useState(false);
 
   useEffect(() => {
-    fetch(`http://localhost:3000/api/levels/${levelId}`)
-      .then((res) => res.json())
-      .then((data) => setLevelData(data))
-      .catch((err) => console.error("Failed to load level data", err));
+    const fetchLevel = async () => {
+      try {
+        const res = await fetch(`http://localhost:3000/api/levels/${levelId}`);
+        const data = await res.json();
+        setLevelData(data);
 
-    // Reset state when level changes
+        const charRes = await fetch(`http://localhost:3000/api/levels/${levelId}/characters`);
+        const charData = await charRes.json();
+        setHitboxes(charData);
+      } catch (err) {
+        console.error("Failed to load level or character data", err);
+      }
+    };
+
+    fetchLevel();
+
     setGameStarted(false);
     setCircle(null);
     setPercentCoords(null);
@@ -67,16 +78,20 @@ export default function GamePage() {
     setFeedback(null);
 
     const svg = svgRef.current;
+    const rect = svg.getBoundingClientRect();
+
+    const xPercent = ((e.clientX - rect.left) / rect.width) * 100;
+    const yPercent = ((e.clientY - rect.top) / rect.height) * 100;
+
+    setPercentCoords({ x: xPercent, y: yPercent });
+
+    // Also calculate SVG coordinate for visual red circle
     const point = svg.createSVGPoint();
     point.x = e.clientX;
     point.y = e.clientY;
     const svgPoint = point.matrixTransform(svg.getScreenCTM().inverse());
 
-    const xPercent = (svgPoint.x / SVG_WIDTH) * 100;
-    const yPercent = (svgPoint.y / SVG_HEIGHT) * 100;
-
     setCircle({ x: svgPoint.x, y: svgPoint.y });
-    setPercentCoords({ x: xPercent, y: yPercent });
     setSelected({});
     setHasClickedOnce(true);
   };
@@ -188,6 +203,26 @@ export default function GamePage() {
           }}
           onClick={gameStarted ? handleImageClick : undefined}
         >
+          {/* Debug hitboxes */}
+          {hitboxes.map((char) => {
+            const x = (char.x / 100) * SVG_WIDTH;
+            const y = (char.y / 100) * SVG_HEIGHT;
+            const width = (char.width / 100) * SVG_WIDTH;
+            const height = (char.height / 100) * SVG_HEIGHT;
+            return (
+              <rect
+                key={char.name}
+                x={x}
+                y={y}
+                width={width}
+                height={height}
+                fill="rgba(0, 0, 255, 0.15)"
+                stroke="blue"
+                strokeWidth="1"
+              />
+            );
+          })}
+
           {foundMarkers.map((marker) => (
             <g key={marker.name}>
               <circle cx={marker.x} cy={marker.y} r="20" stroke="green" strokeWidth="3" fill="rgba(0,255,0,0.2)" />
