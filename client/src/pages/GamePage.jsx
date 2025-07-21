@@ -254,7 +254,13 @@ export default function GamePage() {
           </div>
           <div className="p-6">
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-              {levelData.characters.map((char, index) => {
+              {[...levelData.characters]
+                .sort((a, b) => {
+                  const aNum = parseInt(a.name.replace(/\D/g, ""));
+                  const bNum = parseInt(b.name.replace(/\D/g, ""));
+                  return aNum - bNum;
+                })
+                .map((char, index) => {
                 const isFound = foundCharacters.includes(char.name);
                 const isSelected = selected[char.name];
                 const canClick = gameStarted && hasClickedOnce && !isFound;
