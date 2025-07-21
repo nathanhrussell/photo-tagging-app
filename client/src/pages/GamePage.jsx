@@ -1,5 +1,5 @@
 import { useRef, useState, useEffect } from "react";
-import { useParams } from "react-router-dom";
+import { useParams, useNavigate } from "react-router-dom";
 
 const SVG_WIDTH = 1152;
 const SVG_HEIGHT = 768;
@@ -12,6 +12,7 @@ function formatTime(seconds) {
 
 export default function GamePage() {
   const { levelId } = useParams();
+  const navigate = useNavigate();
   const svgRef = useRef(null);
   const [levelData, setLevelData] = useState(null);
   const [gameStarted, setGameStarted] = useState(false);
@@ -30,6 +31,18 @@ export default function GamePage() {
       .then((res) => res.json())
       .then((data) => setLevelData(data))
       .catch((err) => console.error("Failed to load level data", err));
+
+    // Reset state when level changes
+    setGameStarted(false);
+    setCircle(null);
+    setPercentCoords(null);
+    setHasClickedOnce(false);
+    setSelected({});
+    setFeedback(null);
+    setFoundCharacters([]);
+    setFoundMarkers([]);
+    setElapsed(0);
+    setTimerActive(false);
   }, [levelId]);
 
   useEffect(() => {
@@ -45,17 +58,6 @@ export default function GamePage() {
     }
     return () => clearInterval(interval);
   }, [gameStarted, timerActive, foundCharacters.length]);
-
-  useEffect(() => {
-    if (foundCharacters.length === 3) {
-      setTimerActive(false);
-    }
-  }, [foundCharacters.length]);
-
-  useEffect(() => {
-    setElapsed(0);
-    setTimerActive(false);
-  }, []);
 
   const getCharacterImage = (index) =>
     `http://localhost:3000/images/characters/level${levelId}char${index + 1}.png`;
@@ -120,7 +122,14 @@ export default function GamePage() {
     setTimerActive(true);
   };
 
+  const goToNextLevel = () => {
+    const nextId = parseInt(levelId) + 1;
+    navigate(`/game/${nextId}`);
+  };
+
   if (!levelData) return <div className="text-white p-8">Loading...</div>;
+
+  const showNextLevel = foundCharacters.length === 3 && parseInt(levelId) < 5;
 
   return (
     <div className="flex flex-col items-center w-full p-4">
@@ -149,6 +158,15 @@ export default function GamePage() {
             {feedback === "correct" ? "✅ Correct!" : "❌ Not quite. Try again!"}
           </div>
         </div>
+      )}
+
+      {showNextLevel && (
+        <button
+          onClick={goToNextLevel}
+          className="mb-4 px-6 py-3 bg-green-600 hover:bg-green-700 text-white rounded-xl font-semibold"
+        >
+          Next Level →
+        </button>
       )}
 
       <div className="w-full" style={{ maxWidth: "900px", aspectRatio: `${SVG_WIDTH} / ${SVG_HEIGHT}` }}>
@@ -212,7 +230,7 @@ export default function GamePage() {
                     onClick={() => {
                       if (canClick) {
                         setSelected({ [char.name]: true });
-                        validateCharacterSelection(char.name, index);
+                        validateCharacterSelection(char.name);
                       }
                     }}
                     className={`
@@ -255,7 +273,7 @@ export default function GamePage() {
                 onClick={startGame}
                 className="w-full py-3 bg-red-500 hover:bg-red-600 text-white rounded-xl font-medium transition-colors duration-200"
               >
-                Start Game
+                Start Level
               </button>
             )}
           </div>
