@@ -203,7 +203,7 @@ export default function GamePage() {
           }}
           onClick={gameStarted ? handleImageClick : undefined}
         >
-          {/* Debug hitboxes */}
+{/*     
           {hitboxes.map((char) => {
             const x = (char.x / 100) * SVG_WIDTH;
             const y = (char.y / 100) * SVG_HEIGHT;
@@ -221,7 +221,7 @@ export default function GamePage() {
                 strokeWidth="1"
               />
             );
-          })}
+          })} */}
 
           {foundMarkers.map((marker) => (
             <g key={marker.name}>
