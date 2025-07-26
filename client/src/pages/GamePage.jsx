@@ -37,6 +37,12 @@ export default function GamePage() {
         const charRes = await fetch(`http://localhost:3000/api/levels/${levelId}/characters`);
         const charData = await charRes.json();
         setHitboxes(charData);
+        if (levelId === "1") {
+          sessionStorage.setItem("totalTime", "0");
+        }
+
+        const previousTime = levelId !== "1" ? parseInt(sessionStorage.getItem("totalTime") || "0") : 0;
+        setElapsed(previousTime);
       } catch (err) {
         console.error("Failed to load level or character data", err);
       }
@@ -66,6 +72,7 @@ export default function GamePage() {
     }
     if (foundCharacters.length === 3 && timerActive) {
       setTimerActive(false);
+      sessionStorage.setItem("totalTime", String(elapsed));
     }
     return () => clearInterval(interval);
   }, [gameStarted, timerActive, foundCharacters.length]);
@@ -133,7 +140,8 @@ export default function GamePage() {
 
   const startGame = () => {
     setGameStarted(true);
-    setElapsed(0);
+    const previousTime = levelId !== "1" ? parseInt(sessionStorage.getItem("totalTime") || "0") : 0;
+    setElapsed(previousTime);
     setTimerActive(true);
   };
 
