@@ -253,7 +253,7 @@ export default function GamePage() {
             </h2>
           </div>
           <div className="p-6">
-            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+            <div className="flex justify-center gap-4 flex-wrap max-w-[300px] mx-auto">
               {[...levelData.characters]
                 .sort((a, b) => {
                   const aNum = parseInt(a.name.replace(/\D/g, ""));
@@ -289,7 +289,8 @@ export default function GamePage() {
                       <img
                         src={getCharacterImage(index)}
                         alt={char.name}
-                        className="w-16 h-16 object-cover rounded-lg border border-gray-200"
+                        className="w-16 h-16 sm:w-14 sm:h-14 md:w-12 md:h-12 object-cover rounded-md border border-gray-200"
+                        style={{ width: "64px", height: "64px" }}
                         onError={(e) => (e.target.style.display = "none")}
                       />
                       {isFound && (
