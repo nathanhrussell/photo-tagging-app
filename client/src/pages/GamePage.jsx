@@ -26,6 +26,10 @@ export default function GamePage() {
   const [foundMarkers, setFoundMarkers] = useState([]);
   const [elapsed, setElapsed] = useState(0);
   const [timerActive, setTimerActive] = useState(false);
+  
+  // New state for high score modal
+  const [showHighScoreModal, setShowHighScoreModal] = useState(false);
+  const [playerName, setPlayerName] = useState("");
 
   useEffect(() => {
     const fetchLevel = async () => {
@@ -73,9 +77,14 @@ export default function GamePage() {
     if (foundCharacters.length === 3 && timerActive) {
       setTimerActive(false);
       sessionStorage.setItem("totalTime", String(elapsed));
+      
+      // Check if this is the final level (level 5) and show high score modal
+      if (parseInt(levelId) === 5) {
+        setShowHighScoreModal(true);
+      }
     }
     return () => clearInterval(interval);
-  }, [gameStarted, timerActive, foundCharacters.length]);
+  }, [gameStarted, timerActive, foundCharacters.length, levelId, elapsed]);
 
   const getCharacterImage = (index) =>
     `http://localhost:3000/images/characters/level${levelId}char${index + 1}.png`;
@@ -150,6 +159,34 @@ export default function GamePage() {
     navigate(`/game/${nextId}`);
   };
 
+  const handleHighScoreSubmit = async (e) => {
+    e.preventDefault();
+    if (!playerName.trim()) return;
+
+    // Here you can add the logic to submit the high score
+    // For now, we'll just log it and close the modal
+    console.log("Submitting high score:", {
+      playerName: playerName.trim(),
+      totalTime: elapsed,
+      completedAt: new Date().toISOString()
+    });
+
+    // TODO: Add API call to submit high score
+    // const response = await fetch('http://localhost:3000/api/leaderboard', {
+    //   method: 'POST',
+    //   headers: { 'Content-Type': 'application/json' },
+    //   body: JSON.stringify({
+    //     name: playerName.trim(),
+    //     time: elapsed,
+    //     completedAt: new Date().toISOString()
+    //   })
+    // });
+
+    setShowHighScoreModal(false);
+    // Optionally navigate to leaderboard or home page
+    // navigate('/leaderboard');
+  };
+
   if (!levelData) return <div className="text-white p-8">Loading...</div>;
 
   const showNextLevel = foundCharacters.length === 3 && parseInt(levelId) < 5;
@@ -211,26 +248,6 @@ export default function GamePage() {
           }}
           onClick={gameStarted ? handleImageClick : undefined}
         >
-{/*     
-          {hitboxes.map((char) => {
-            const x = (char.x / 100) * SVG_WIDTH;
-            const y = (char.y / 100) * SVG_HEIGHT;
-            const width = (char.width / 100) * SVG_WIDTH;
-            const height = (char.height / 100) * SVG_HEIGHT;
-            return (
-              <rect
-                key={char.name}
-                x={x}
-                y={y}
-                width={width}
-                height={height}
-                fill="rgba(0, 0, 255, 0.15)"
-                stroke="blue"
-                strokeWidth="1"
-              />
-            );
-          })} */}
-
           {foundMarkers.map((marker) => (
             <g key={marker.name}>
               <circle cx={marker.x} cy={marker.y} r="20" stroke="green" strokeWidth="3" fill="rgba(0,255,0,0.2)" />
@@ -249,6 +266,64 @@ export default function GamePage() {
         </svg>
       </div>
 
+      {/* High Score Modal */}
+      {showHighScoreModal && (
+        <div className="fixed inset-0 bg-black bg-opacity-60 flex items-center justify-center z-[200] p-4">
+          <div className="bg-white rounded-2xl shadow-2xl w-full max-w-md mx-auto">
+            <div className="px-6 py-6 text-center">
+              <div className="mb-4">
+                <div className="text-6xl mb-2">🎉</div>
+                <h2 className="text-2xl font-bold text-gray-800 mb-2">
+                  Congratulations!
+                </h2>
+                <p className="text-gray-600 mb-4">
+                  You found all 15 characters and completed the AI Slop Challenge!
+                </p>
+                <div className="text-3xl font-mono font-bold text-green-600 mb-6">
+                  Final Time: {formatTime(elapsed)}
+                </div>
+              </div>
+
+              <form onSubmit={handleHighScoreSubmit}>
+                <div className="mb-6">
+                  <label htmlFor="playerName" className="block text-sm font-medium text-gray-700 mb-2">
+                    Enter your name for the leaderboard:
+                  </label>
+                  <input
+                    type="text"
+                    id="playerName"
+                    value={playerName}
+                    onChange={(e) => setPlayerName(e.target.value)}
+                    className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none transition-all duration-200"
+                    placeholder="Your name"
+                    maxLength={20}
+                    autoFocus
+                  />
+                </div>
+
+                <div className="flex gap-3">
+                  <button
+                    type="button"
+                    onClick={() => setShowHighScoreModal(false)}
+                    className="flex-1 py-3 px-4 border border-gray-300 text-gray-700 rounded-xl font-medium hover:bg-gray-50 transition-colors duration-200"
+                  >
+                    Skip
+                  </button>
+                  <button
+                    type="submit"
+                    disabled={!playerName.trim()}
+                    className="flex-1 py-3 px-4 bg-blue-600 hover:bg-blue-700 disabled:bg-gray-300 disabled:cursor-not-allowed text-white rounded-xl font-medium transition-colors duration-200"
+                  >
+                    Submit Score
+                  </button>
+                </div>
+              </form>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Character Selection Modal */}
       <div className={`fixed inset-0 flex items-center justify-center z-50 p-4 ${
         feedback ? "bg-transparent" : "bg-black bg-opacity-50"
       }`}>
