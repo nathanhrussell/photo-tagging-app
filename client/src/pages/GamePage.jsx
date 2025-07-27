@@ -30,6 +30,7 @@ export default function GamePage() {
   // New state for high score modal
   const [showHighScoreModal, setShowHighScoreModal] = useState(false);
   const [playerName, setPlayerName] = useState("");
+  const [scoreSubmitted, setScoreSubmitted] = useState(false);
 
   useEffect(() => {
     const fetchLevel = async () => {
@@ -182,9 +183,32 @@ export default function GamePage() {
     //   })
     // });
 
-    setShowHighScoreModal(false);
-    // Optionally navigate to leaderboard or home page
-    // navigate('/leaderboard');
+    setScoreSubmitted(true);
+  };
+
+  const handleSkipHighScore = () => {
+    setScoreSubmitted(true);
+  };
+
+  const resetGameAndGoHome = () => {
+    // Clear session storage to reset the game state
+    sessionStorage.removeItem("totalTime");
+    
+    // Reset all game state
+    setGameStarted(false);
+    setCircle(null);
+    setPercentCoords(null);
+    setHasClickedOnce(false);
+    setSelected({});
+    setFeedback(null);
+    setFoundCharacters([]);
+    setFoundMarkers([]);
+    setElapsed(0);
+    setTimerActive(false);
+    setPlayerName("");
+    
+    // Navigate to homepage (assuming it's at "/")
+    navigate("/");
   };
 
   if (!levelData) return <div className="text-white p-8">Loading...</div>;
@@ -329,7 +353,7 @@ export default function GamePage() {
                 <div className="flex gap-3">
                   <button
                     type="button"
-                    onClick={() => setShowHighScoreModal(false)}
+                    onClick={handleSkipHighScore}
                     className="flex-1 py-3 px-4 border border-gray-300 text-gray-700 rounded-xl font-medium hover:bg-gray-50 transition-colors duration-200"
                   >
                     Skip
@@ -342,6 +366,13 @@ export default function GamePage() {
                     Submit Score
                   </button>
                 </div>
+                
+                <button
+                  onClick={resetGameAndGoHome}
+                  className="w-full mt-4 py-3 px-4 bg-green-600 hover:bg-green-700 text-white rounded-xl font-medium transition-colors duration-200"
+                >
+                  🏠 Play Again
+                </button>
               </form>
             </div>
           </div>
