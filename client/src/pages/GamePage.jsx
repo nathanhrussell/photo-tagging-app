@@ -237,7 +237,8 @@ export default function GamePage() {
           height="100%"
           style={{
             display: "block",
-            backgroundImage: `url(http://localhost:3000${levelData.imageUrl})`,
+            backgroundImage: gameStarted ? `url(http://localhost:3000${levelData.imageUrl})` : "none",
+            backgroundColor: gameStarted ? "transparent" : "#f3f4f6",
             backgroundSize: "contain",
             backgroundRepeat: "no-repeat",
             backgroundPosition: "center",
@@ -248,6 +249,30 @@ export default function GamePage() {
           }}
           onClick={gameStarted ? handleImageClick : undefined}
         >
+          {!gameStarted && (
+            <rect
+              x="0"
+              y="0"
+              width={SVG_WIDTH}
+              height={SVG_HEIGHT}
+              fill="#f3f4f6"
+              rx="16"
+            />
+          )}
+          {!gameStarted && (
+            <text
+              x={SVG_WIDTH / 2}
+              y={SVG_HEIGHT / 2}
+              textAnchor="middle"
+              dominantBaseline="middle"
+              fontSize="32"
+              fill="#6b7280"
+              fontFamily="system-ui, -apple-system, sans-serif"
+              fontWeight="500"
+            >
+              Click "Start Level" to begin
+            </text>
+          )}
           {foundMarkers.map((marker) => (
             <g key={marker.name}>
               <circle cx={marker.x} cy={marker.y} r="20" stroke="green" strokeWidth="3" fill="rgba(0,255,0,0.2)" />
