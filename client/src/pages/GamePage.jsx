@@ -32,9 +32,49 @@ export default function GamePage() {
   const [playerName, setPlayerName] = useState("");
   const [scoreSubmitted, setScoreSubmitted] = useState(false);
 
+  // New state for level locking
+  const [isLevelLocked, setIsLevelLocked] = useState(false);
+
+  // Function to check if level is unlocked
+  const checkLevelUnlocked = (currentLevelId) => {
+    const currentLevel = parseInt(currentLevelId);
+    
+    // Level 1 is always unlocked
+    if (currentLevel === 1) {
+      return true;
+    }
+    
+    // Check if all previous levels have been completed
+    const completedLevels = JSON.parse(sessionStorage.getItem("completedLevels") || "[]");
+    
+    // Check that all levels from 1 to currentLevel-1 are completed
+    for (let i = 1; i < currentLevel; i++) {
+      if (!completedLevels.includes(i)) {
+        return false;
+      }
+    }
+    
+    return true;
+  };
+
+  // Function to mark level as completed
+  const markLevelCompleted = (levelId) => {
+    const completedLevels = JSON.parse(sessionStorage.getItem("completedLevels") || "[]");
+    const levelNum = parseInt(levelId);
+    
+    if (!completedLevels.includes(levelNum)) {
+      completedLevels.push(levelNum);
+      sessionStorage.setItem("completedLevels", JSON.stringify(completedLevels));
+    }
+  };
+
   useEffect(() => {
     const fetchLevel = async () => {
       try {
+        // Check if level is unlocked first
+        const isUnlocked = checkLevelUnlocked(levelId);
+        setIsLevelLocked(!isUnlocked);
+        
         const res = await fetch(`http://localhost:3000/api/levels/${levelId}`);
         const data = await res.json();
         setLevelData(data);
@@ -78,6 +118,9 @@ export default function GamePage() {
     if (foundCharacters.length === 3 && timerActive) {
       setTimerActive(false);
       sessionStorage.setItem("totalTime", String(elapsed));
+      
+      // Mark current level as completed
+      markLevelCompleted(levelId);
       
       // Check if this is the final level (level 5) and show high score modal
       if (parseInt(levelId) === 5) {
@@ -149,6 +192,8 @@ export default function GamePage() {
   };
 
   const startGame = () => {
+    if (isLevelLocked) return;
+    
     setGameStarted(true);
     const previousTime = levelId !== "1" ? parseInt(sessionStorage.getItem("totalTime") || "0") : 0;
     setElapsed(previousTime);
@@ -201,6 +246,7 @@ export default function GamePage() {
   const resetGameAndGoHome = () => {
     // Clear session storage to reset the game state
     sessionStorage.removeItem("totalTime");
+    sessionStorage.removeItem("completedLevels");
     
     // Reset all game state
     setGameStarted(false);
@@ -302,7 +348,7 @@ export default function GamePage() {
               fontFamily="system-ui, -apple-system, sans-serif"
               fontWeight="500"
             >
-              Click "Start Level" to begin
+              {isLevelLocked ? "Complete previous levels to unlock" : "Click \"Start Level\" to begin"}
             </text>
           )}
           {foundMarkers.map((marker) => (
@@ -479,9 +525,14 @@ export default function GamePage() {
             {!gameStarted && (
               <button
                 onClick={startGame}
-                className="w-full py-3 bg-red-500 hover:bg-red-600 text-white rounded-xl font-medium transition-colors duration-200"
+                disabled={isLevelLocked}
+                className={`w-full py-3 rounded-xl font-medium transition-colors duration-200 ${
+                  isLevelLocked
+                    ? "bg-gray-300 text-gray-500 cursor-not-allowed"
+                    : "bg-red-500 hover:bg-red-600 text-white"
+                }`}
               >
-                Start Level
+                {isLevelLocked ? "🔒 Level Locked" : "Start Level"}
               </button>
             )}
           </div>
