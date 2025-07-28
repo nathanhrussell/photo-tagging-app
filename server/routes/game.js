@@ -108,10 +108,109 @@ router.post("/scores", async (req, res) => {
   }
 });
 
+// GET /scores - fetch all completion scores for leaderboard
+router.get("/scores", async (req, res) => {
+  try {
+    const scores = await prisma.completionScore.findMany({
+      select: {
+        id: true,
+        playerName: true,
+        totalTime: true,
+        completedAt: true
+      },
+      orderBy: {
+        totalTime: 'asc' // Fastest times first
+      }
+    });
+    
+    // Transform the data to match what the frontend expects
+    const transformedScores = scores.map(score => ({
+      name: score.playerName,
+      time: score.totalTime,
+      completedAt: score.completedAt
+    }));
+    
+    console.log(`Returning ${transformedScores.length} completion scores`);
+    res.json(transformedScores);
+  } catch (error) {
+    console.error("Error fetching completion scores:", error);
+    res.status(500).json({ error: "Failed to fetch scores" });
+  }
+});
+
 // GET /scores/:levelId (stub)
 router.get("/scores/:levelId", (req, res) => {
   // Replace with real leaderboard fetch from DB if needed
   res.json([]);
 });
+
+// GET /leaderboard - basic HTML test page
+router.get("/leaderboard", async (req, res) => {
+  try {
+    const scores = await prisma.completionScore.findMany({
+      orderBy: { totalTime: "asc" }
+    });
+
+    const rows = scores.map(score => `
+      <tr>
+        <td>${score.playerName}</td>
+        <td>${score.totalTime}s</td>
+        <td>${new Date(score.completedAt).toLocaleString()}</td>
+      </tr>
+    `).join("");
+
+    res.send(`
+      <!DOCTYPE html>
+      <html>
+        <head>
+          <title>Leaderboard</title>
+          <style>
+            body {
+              font-family: sans-serif;
+              padding: 2rem;
+              background: #f9fafb;
+              color: #333;
+            }
+            table {
+              width: 100%;
+              border-collapse: collapse;
+              margin-top: 1rem;
+            }
+            th, td {
+              border: 1px solid #ccc;
+              padding: 0.5rem;
+              text-align: left;
+            }
+            th {
+              background: #e2e8f0;
+            }
+            h1 {
+              margin-bottom: 1rem;
+            }
+          </style>
+        </head>
+        <body>
+          <h1>Leaderboard</h1>
+          <table>
+            <thead>
+              <tr>
+                <th>Player</th>
+                <th>Time</th>
+                <th>Completed At</th>
+              </tr>
+            </thead>
+            <tbody>
+              ${rows || "<tr><td colspan='3'>No scores yet</td></tr>"}
+            </tbody>
+          </table>
+        </body>
+      </html>
+    `);
+  } catch (err) {
+    console.error("Error rendering leaderboard:", err);
+    res.status(500).send("Failed to load leaderboard");
+  }
+});
+
 
 export default router;

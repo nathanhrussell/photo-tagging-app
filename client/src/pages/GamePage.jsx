@@ -31,6 +31,8 @@ export default function GamePage() {
   const [showHighScoreModal, setShowHighScoreModal] = useState(false);
   const [playerName, setPlayerName] = useState("");
   const [scoreSubmitted, setScoreSubmitted] = useState(false);
+  const [leaderboardData, setLeaderboardData] = useState([]);
+  const [loadingLeaderboard, setLoadingLeaderboard] = useState(false);
 
   // New state for level locking
   const [isLevelLocked, setIsLevelLocked] = useState(false);
@@ -230,6 +232,9 @@ export default function GamePage() {
 
       const result = await response.json();
       console.log("Score submitted successfully:", result);
+      
+      // Fetch leaderboard data after successful submission
+      await fetchLeaderboard();
       setScoreSubmitted(true);
     } catch (error) {
       console.error("Failed to submit score:", error);
@@ -239,8 +244,31 @@ export default function GamePage() {
     }
   };
 
-  const handleSkipHighScore = () => {
+  const handleSkipHighScore = async () => {
+    // Fetch leaderboard even if they skip submission
+    await fetchLeaderboard();
     setScoreSubmitted(true);
+  };
+
+  const fetchLeaderboard = async () => {
+    setLoadingLeaderboard(true);
+    try {
+      const response = await fetch('http://localhost:3000/api/scores');
+      if (response.ok) {
+        const scores = await response.json();
+        // Sort by time (ascending - fastest first) and take top 10
+        const sortedScores = scores.sort((a, b) => a.time - b.time).slice(0, 10);
+        setLeaderboardData(sortedScores);
+      } else {
+        console.error("Failed to fetch leaderboard");
+        setLeaderboardData([]);
+      }
+    } catch (error) {
+      console.error("Error fetching leaderboard:", error);
+      setLeaderboardData([]);
+    } finally {
+      setLoadingLeaderboard(false);
+    }
   };
 
   const resetGameAndGoHome = () => {
@@ -451,6 +479,37 @@ export default function GamePage() {
           </div>
         </div>
       )}
+
+            {scoreSubmitted && parseInt(levelId) === 5 && (
+        <div className="mt-12 w-full max-w-xl text-center">
+          <h2 className="text-2xl font-bold mb-4">🏆 Leaderboard</h2>
+          {loadingLeaderboard ? (
+            <p className="text-gray-600">Loading leaderboard...</p>
+          ) : leaderboardData.length === 0 ? (
+            <p className="text-gray-600">No scores yet. Be the first to complete the game!</p>
+          ) : (
+            <table className="w-full text-left border border-gray-300 rounded-xl overflow-hidden">
+              <thead className="bg-gray-100">
+                <tr>
+                  <th className="p-3 border-b">#</th>
+                  <th className="p-3 border-b">Name</th>
+                  <th className="p-3 border-b">Time</th>
+                </tr>
+              </thead>
+              <tbody>
+                {leaderboardData.map((entry, index) => (
+                  <tr key={index} className="even:bg-gray-50">
+                    <td className="p-3 border-b">{index + 1}</td>
+                    <td className="p-3 border-b">{entry.name}</td>
+                    <td className="p-3 border-b">{formatTime(entry.time)}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          )}
+        </div>
+      )}
+
 
       {/* Character Selection Modal */}
       <div className={`fixed inset-0 flex items-center justify-center z-50 p-4 ${
