@@ -71,6 +71,14 @@ export default function GamePage() {
   };
 
   useEffect(() => {
+    const navEntries = performance.getEntriesByType("navigation");
+    const isReload = navEntries.length > 0 && navEntries[0].type === "reload";
+
+    if (isReload) {
+      sessionStorage.removeItem("totalTime");
+      sessionStorage.removeItem("completedLevels");
+    }
+
     const fetchLevel = async () => {
       try {
         // Check if level is unlocked first
