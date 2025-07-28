@@ -34,3 +34,10 @@ model Score {
   levelId  Int
   createdAt DateTime @default(now())
 }
+
+model CompletionScore {
+  id          Int      @id @default(autoincrement())
+  playerName  String
+  totalTime   Int      // total time in seconds for all levels
+  completedAt DateTime @default(now())
+}

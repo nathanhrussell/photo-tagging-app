@@ -83,14 +83,29 @@ router.post("/validate-click", async (req, res) => {
   }
 });
 
-// POST /scores (stub)
-router.post("/scores", (req, res) => {
-  const { name, levelId, time } = req.body;
-  if (!name || !levelId || time == null) {
+// POST /scores - for final game completion
+router.post("/scores", async (req, res) => {
+  const { name, time, completedAt } = req.body;
+  
+  if (!name || time == null) {
     return res.status(400).json({ error: "Missing required fields" });
   }
-  // Replace this with actual DB logic if needed
-  res.json({ success: true });
+
+  try {
+    const score = await prisma.completionScore.create({
+      data: {
+        playerName: name,
+        totalTime: parseInt(time),
+        completedAt: completedAt ? new Date(completedAt) : new Date()
+      }
+    });
+    
+    console.log("New completion score submitted:", score);
+    res.json({ success: true, message: "Score recorded successfully", score });
+  } catch (error) {
+    console.error("Error saving completion score:", error);
+    res.status(500).json({ error: "Failed to save score" });
+  }
 });
 
 // GET /scores/:levelId (stub)

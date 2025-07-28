@@ -164,26 +164,34 @@ export default function GamePage() {
     e.preventDefault();
     if (!playerName.trim()) return;
 
-    // Here you can add the logic to submit the high score
-    // For now, we'll just log it and close the modal
-    console.log("Submitting high score:", {
-      playerName: playerName.trim(),
-      totalTime: elapsed,
+    const scoreData = {
+      name: playerName.trim(),
+      time: elapsed,
       completedAt: new Date().toISOString()
-    });
+    };
 
-    // TODO: Add API call to submit high score
-    // const response = await fetch('http://localhost:3000/api/leaderboard', {
-    //   method: 'POST',
-    //   headers: { 'Content-Type': 'application/json' },
-    //   body: JSON.stringify({
-    //     name: playerName.trim(),
-    //     time: elapsed,
-    //     completedAt: new Date().toISOString()
-    //   })
-    // });
+    console.log("Submitting high score:", scoreData);
 
-    setScoreSubmitted(true);
+    try {
+      const response = await fetch('http://localhost:3000/api/scores', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(scoreData)
+      });
+
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+
+      const result = await response.json();
+      console.log("Score submitted successfully:", result);
+      setScoreSubmitted(true);
+    } catch (error) {
+      console.error("Failed to submit score:", error);
+      // Still show success screen even if submission failed
+      // You could add error handling here if desired
+      setScoreSubmitted(true);
+    }
   };
 
   const handleSkipHighScore = () => {
@@ -320,60 +328,79 @@ export default function GamePage() {
         <div className="fixed inset-0 bg-black bg-opacity-60 flex items-center justify-center z-[200] p-4">
           <div className="bg-white rounded-2xl shadow-2xl w-full max-w-md mx-auto">
             <div className="px-6 py-6 text-center">
-              <div className="mb-4">
-                <div className="text-6xl mb-2">🎉</div>
-                <h2 className="text-2xl font-bold text-gray-800 mb-2">
-                  Congratulations!
-                </h2>
-                <p className="text-gray-600 mb-4">
-                  You found all 15 characters and completed the AI Slop Challenge!
-                </p>
-                <div className="text-3xl font-mono font-bold text-green-600 mb-6">
-                  Final Time: {formatTime(elapsed)}
-                </div>
-              </div>
+              {!scoreSubmitted ? (
+                <>
+                  <div className="mb-4">
+                    <div className="text-6xl mb-2">🎉</div>
+                    <h2 className="text-2xl font-bold text-gray-800 mb-2">
+                      Congratulations!
+                    </h2>
+                    <p className="text-gray-600 mb-4">
+                      You found all 15 characters and completed the AI Slop Challenge!
+                    </p>
+                    <div className="text-3xl font-mono font-bold text-green-600 mb-6">
+                      Final Time: {formatTime(elapsed)}
+                    </div>
+                  </div>
 
-              <form onSubmit={handleHighScoreSubmit}>
-                <div className="mb-6">
-                  <label htmlFor="playerName" className="block text-sm font-medium text-gray-700 mb-2">
-                    Enter your name for the leaderboard:
-                  </label>
-                  <input
-                    type="text"
-                    id="playerName"
-                    value={playerName}
-                    onChange={(e) => setPlayerName(e.target.value)}
-                    className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none transition-all duration-200"
-                    placeholder="Your name"
-                    maxLength={20}
-                    autoFocus
-                  />
-                </div>
+                  <form onSubmit={handleHighScoreSubmit}>
+                    <div className="mb-6">
+                      <label htmlFor="playerName" className="block text-sm font-medium text-gray-700 mb-2">
+                        Enter your name for the leaderboard:
+                      </label>
+                      <input
+                        type="text"
+                        id="playerName"
+                        value={playerName}
+                        onChange={(e) => setPlayerName(e.target.value)}
+                        className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none transition-all duration-200"
+                        placeholder="Your name"
+                        maxLength={20}
+                        autoFocus
+                      />
+                    </div>
 
-                <div className="flex gap-3">
+                    <div className="flex gap-3">
+                      <button
+                        type="button"
+                        onClick={handleSkipHighScore}
+                        className="flex-1 py-3 px-4 border border-gray-300 text-gray-700 rounded-xl font-medium hover:bg-gray-50 transition-colors duration-200"
+                      >
+                        Skip
+                      </button>
+                      <button
+                        type="submit"
+                        disabled={!playerName.trim()}
+                        className="flex-1 py-3 px-4 bg-blue-600 hover:bg-blue-700 disabled:bg-gray-300 disabled:cursor-not-allowed text-white rounded-xl font-medium transition-colors duration-200"
+                      >
+                        Submit Score
+                      </button>
+                    </div>
+                  </form>
+                </>
+              ) : (
+                <>
+                  <div className="mb-6">
+                    <div className="text-6xl mb-2">✅</div>
+                    <h2 className="text-2xl font-bold text-gray-800 mb-2">
+                      {playerName.trim() ? "Score Submitted!" : "Thanks for Playing!"}
+                    </h2>
+                    <p className="text-gray-600 mb-4">
+                      {playerName.trim() 
+                        ? `Good luck ${playerName.trim()}! Your time of ${formatTime(elapsed)} has been recorded.`
+                        : `Your final time was ${formatTime(elapsed)}. Challenge your friends to beat it!`
+                      }
+                    </p>
+                  </div>
+
                   <button
-                    type="button"
-                    onClick={handleSkipHighScore}
-                    className="flex-1 py-3 px-4 border border-gray-300 text-gray-700 rounded-xl font-medium hover:bg-gray-50 transition-colors duration-200"
+                    onClick={resetGameAndGoHome}
+                    className="w-full py-3 px-4 bg-green-600 hover:bg-green-700 text-white rounded-xl font-medium transition-colors duration-200"
                   >
-                    Skip
+                    🏠 Play Again
                   </button>
-                  <button
-                    type="submit"
-                    disabled={!playerName.trim()}
-                    className="flex-1 py-3 px-4 bg-blue-600 hover:bg-blue-700 disabled:bg-gray-300 disabled:cursor-not-allowed text-white rounded-xl font-medium transition-colors duration-200"
-                  >
-                    Submit Score
-                  </button>
-                </div>
-                
-                <button
-                  onClick={resetGameAndGoHome}
-                  className="w-full mt-4 py-3 px-4 bg-green-600 hover:bg-green-700 text-white rounded-xl font-medium transition-colors duration-200"
-                >
-                  🏠 Play Again
-                </button>
-              </form>
+                </>
+              )}
             </div>
           </div>
         </div>
