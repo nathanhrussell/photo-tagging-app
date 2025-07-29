@@ -4,7 +4,7 @@ import { PrismaClient } from "@prisma/client";
 const router = express.Router();
 const prisma = new PrismaClient();
 
-app.get("/api/levels/:id/characters", async (req, res) => {
+router.get("/levels/:id/characters", async (req, res) => {
   const levelId = parseInt(req.params.id);
   try {
     const characters = await prisma.character.findMany({
