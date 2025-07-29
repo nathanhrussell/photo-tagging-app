@@ -85,11 +85,11 @@ export default function GamePage() {
         const isUnlocked = checkLevelUnlocked(levelId);
         setIsLevelLocked(!isUnlocked);
         
-        const res = await fetch(`http://localhost:3000/api/levels/${levelId}`);
+        const res = await fetch(`api/levels/${levelId}`);
         const data = await res.json();
         setLevelData(data);
 
-        const charRes = await fetch(`http://localhost:3000/api/levels/${levelId}/characters`);
+        const charRes = await fetch(`api/levels/${levelId}/characters`);
         const charData = await charRes.json();
         setHitboxes(charData);
         if (levelId === "1") {
@@ -141,7 +141,7 @@ export default function GamePage() {
   }, [gameStarted, timerActive, foundCharacters.length, levelId, elapsed]);
 
   const getCharacterImage = (index) =>
-    `http://localhost:3000/images/characters/level${levelId}char${index + 1}.png`;
+    `images/characters/level${levelId}char${index + 1}.png`;
 
   const handleImageClick = (e) => {
     if (foundCharacters.length === 3) return;
@@ -177,7 +177,7 @@ export default function GamePage() {
     };
 
     try {
-      const res = await fetch("http://localhost:3000/api/validate-click", {
+      const res = await fetch("api/validate-click", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(payload)
@@ -228,7 +228,7 @@ export default function GamePage() {
     console.log("Submitting high score:", scoreData);
 
     try {
-      const response = await fetch('http://localhost:3000/api/scores', {
+      const response = await fetch('api/scores', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(scoreData)
@@ -261,7 +261,7 @@ export default function GamePage() {
   const fetchLeaderboard = async () => {
     setLoadingLeaderboard(true);
     try {
-      const response = await fetch('http://localhost:3000/api/scores');
+      const response = await fetch('api/scores');
       if (response.ok) {
         const scores = await response.json();
         // Sort by time (ascending - fastest first) and take top 10
@@ -351,7 +351,7 @@ export default function GamePage() {
           height="100%"
           style={{
             display: "block",
-            backgroundImage: gameStarted ? `url(http://localhost:3000${levelData.imageUrl})` : "none",
+            backgroundImage: gameStarted ? `url(${levelData.imageUrl})` : "none",
             backgroundColor: gameStarted ? "transparent" : "#f3f4f6",
             backgroundSize: "contain",
             backgroundRepeat: "no-repeat",
