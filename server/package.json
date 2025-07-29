@@ -2,12 +2,10 @@
   "name": "server",
   "version": "1.0.0",
   "type": "module",
-  "main": "index.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1",
-  "start": "node src/index.cjs",
-  "dev": "nodemon index.js",
-  "build": "echo 'no build step needed'"
+    "start": "node src/index.js",
+    "dev": "nodemon src/index.js",
+    "build": "echo 'no build step needed'"
   },
   "keywords": [],
   "author": "",
