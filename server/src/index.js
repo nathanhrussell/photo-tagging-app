@@ -11,7 +11,7 @@ const prisma = new PrismaClient();
 const PORT = process.env.PORT || 3000;
 
 app.use(cors({
-  origin: "https://photo-tagging-app-1-b6dj.onrender.com/"
+  origin: "https://photo-tagging-app-1-b6dj.onrender.com"
 }));
 app.use(express.json());
 app.use("/api", gameRoutes);
@@ -69,7 +69,6 @@ app.post("/api/validate-click", async (req, res) => {
 });
 
 
-app.use(cors());
 app.use("/images", express.static("public"));
 
 app.get("/api/test", (req, res) => {
