@@ -12,6 +12,7 @@ const PORT = process.env.PORT || 3000;
 
 app.use(cors({
   origin: "https://photo-tagging-app-1-b6dj.onrender.com/"
+}));
 app.use(express.json());
 app.use("/api", gameRoutes);
 
