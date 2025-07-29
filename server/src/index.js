@@ -2,12 +2,15 @@ import express from "express";
 import cors from "cors";
 import dotenv from "dotenv";
 import { PrismaClient } from "@prisma/client";
-import gameRoutes from "../routes/game.js";
+import gameRouter from "./routes/game.js";
 
 dotenv.config();
 
 const app = express();
-const prisma = new PrismaClient();
+
+const prisma = new PrismaClient({
+  log: ['query', 'info', 'warn', 'error'], 
+});
 const PORT = process.env.PORT || 3000;
 
 app.use(cors({
@@ -15,7 +18,8 @@ app.use(cors({
 }));
 app.use(express.json());
 
-app.use("/api", gameRoutes);
+
+app.use("/api", gameRouter(prisma));
 
 app.use("/images", express.static("public"));
 
@@ -23,6 +27,18 @@ app.use("/images", express.static("public"));
 app.get("/api/test", (req, res) => {
   console.log("✅ /api/test hit");
   res.json({ message: "Backend is working!" });
+});
+
+
+app.use((err, req, res, next) => {
+  console.error("GLOBAL EXPRESS ERROR CAUGHT:", err.stack);
+  res.status(500).send('Something broke on the server!');
+});
+
+
+process.on('unhandledRejection', (reason, promise) => {
+    console.error('GLOBAL UNHANDLED REJECTION IN INDEX.JS (process crash likely):', reason, 'at promise:', promise);
+
 });
 
 app.listen(PORT, () => {
