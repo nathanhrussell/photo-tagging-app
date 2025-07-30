@@ -89,7 +89,7 @@ export default function GamePage() {
         const data = await res.json();
         setLevelData(data);
 
-        const charRes = await fetch(`/levels/${levelId}/characters`);
+        const charRes = await fetch(`/api/levels/${levelId}/characters`);
         const charData = await charRes.json();
         setHitboxes(charData);
         if (levelId === "1") {
