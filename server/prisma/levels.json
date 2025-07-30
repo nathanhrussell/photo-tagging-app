@@ -1,0 +1,177 @@
+[
+  {
+    "id": 1,
+    "name": "Level 1",
+    "imageUrl": "/images/level1.png",
+    "characters": [
+      {
+        "id": 1,
+        "name": "Character 1",
+        "x": 9,
+        "y": 38,
+        "width": 10.7,
+        "height": 38,
+        "levelId": 1
+      },
+      {
+        "id": 2,
+        "name": "Character 2",
+        "x": 27,
+        "y": 41,
+        "width": 11.5,
+        "height": 40,
+        "levelId": 1
+      },
+      {
+        "id": 3,
+        "name": "Character 3",
+        "x": 53,
+        "y": 49,
+        "width": 9,
+        "height": 12,
+        "levelId": 1
+      }
+    ],
+    "scores": []
+  },
+  {
+    "id": 2,
+    "name": "Level 2",
+    "imageUrl": "/images/level2.png",
+    "characters": [
+      {
+        "id": 4,
+        "name": "Character 1",
+        "x": 25,
+        "y": 48,
+        "width": 18,
+        "height": 38,
+        "levelId": 2
+      },
+      {
+        "id": 5,
+        "name": "Character 2",
+        "x": 60,
+        "y": 77,
+        "width": 7.1,
+        "height": 15.2,
+        "levelId": 2
+      },
+      {
+        "id": 6,
+        "name": "Character 3",
+        "x": 68,
+        "y": 20,
+        "width": 15,
+        "height": 42.2,
+        "levelId": 2
+      }
+    ],
+    "scores": []
+  },
+  {
+    "id": 3,
+    "name": "Level 3",
+    "imageUrl": "/images/level3.png",
+    "characters": [
+      {
+        "id": 7,
+        "name": "Character 1",
+        "x": 25.5,
+        "y": 1,
+        "width": 6.2,
+        "height": 9,
+        "levelId": 3
+      },
+      {
+        "id": 8,
+        "name": "Character 2",
+        "x": 59,
+        "y": 56.7,
+        "width": 7,
+        "height": 17,
+        "levelId": 3
+      },
+      {
+        "id": 9,
+        "name": "Character 3",
+        "x": 61,
+        "y": 84.8,
+        "width": 4.9,
+        "height": 9,
+        "levelId": 3
+      }
+    ],
+    "scores": []
+  },
+  {
+    "id": 4,
+    "name": "Level 4",
+    "imageUrl": "/images/level4.png",
+    "characters": [
+      {
+        "id": 10,
+        "name": "Character 1",
+        "x": 0.3,
+        "y": 62,
+        "width": 6,
+        "height": 12,
+        "levelId": 4
+      },
+      {
+        "id": 11,
+        "name": "Character 2",
+        "x": 24,
+        "y": 57,
+        "width": 4,
+        "height": 10,
+        "levelId": 4
+      },
+      {
+        "id": 12,
+        "name": "Character 3",
+        "x": 83,
+        "y": 80.3,
+        "width": 5,
+        "height": 12.5,
+        "levelId": 4
+      }
+    ],
+    "scores": []
+  },
+  {
+    "id": 5,
+    "name": "Level 5",
+    "imageUrl": "/images/level5.png",
+    "characters": [
+      {
+        "id": 13,
+        "name": "Character 1",
+        "x": 41,
+        "y": 91,
+        "width": 3,
+        "height": 8,
+        "levelId": 5
+      },
+      {
+        "id": 14,
+        "name": "Character 2",
+        "x": 60,
+        "y": 87,
+        "width": 6,
+        "height": 9,
+        "levelId": 5
+      },
+      {
+        "id": 15,
+        "name": "Character 3",
+        "x": 67.5,
+        "y": 16.5,
+        "width": 3,
+        "height": 4,
+        "levelId": 5
+      }
+    ],
+    "scores": []
+  }
+]
