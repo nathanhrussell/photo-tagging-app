@@ -89,9 +89,9 @@ export default function GamePage() {
         const data = await res.json();
         setLevelData(data);
 
-        const charRes = await fetch(`/api/levels/${levelId}/characters`);
-        const charData = await charRes.json();
-        setHitboxes(charData);
+        // const charRes = await fetch(`/api/levels/${levelId}/characters`);
+        // const charData = await charRes.json();
+        // setHitboxes(charData);
         if (levelId === "1") {
           sessionStorage.setItem("totalTime", "0");
         }

@@ -1,9 +1,14 @@
 import { PrismaClient } from "@prisma/client";
 import fs from "fs";
+import dotenv from "dotenv";
+
+// Load environment variables
+dotenv.config();
 
 const prisma = new PrismaClient();
 
 async function main() {
+  // Fixed: Use correct relative path when running from server/ directory
   const levels = JSON.parse(fs.readFileSync("prisma/levels.json", "utf-8"));
 
   for (const level of levels) {
@@ -58,6 +63,7 @@ async function main() {
     console.log(`Seeded level ${level.id}`);
   }
 
+  // Fixed: Use correct relative path when running from server/ directory
   const completionScores = JSON.parse(
     fs.readFileSync("prisma/completionScores.json", "utf-8")
   );
