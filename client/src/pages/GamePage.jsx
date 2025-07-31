@@ -322,12 +322,19 @@ export default function GamePage() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(scoreData)
       });
-
+      
       if (!response.ok) {
         throw new Error(`HTTP error! status: ${response.status}`);
       }
-
-      const result = await response.json();
+      
+      let result;
+      try {
+        result = await response.json();
+      } catch (jsonError) {
+        console.error("Failed to parse server response:", jsonError);
+        throw jsonError;
+      }
+      
       console.log("Score submitted successfully:", result);
       
       // Fetch leaderboard data after successful submission
