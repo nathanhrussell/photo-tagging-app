@@ -317,22 +317,36 @@ export default function GamePage() {
     console.log("Submitting high score:", scoreData);
 
     try {
-      const response = await fetch('/api/scores', {
+      // Use the same base URL pattern as level fetching
+      const backendBaseUrl = import.meta.env.VITE_API_BASE_URL || "http://localhost:3000";
+      const url = `${backendBaseUrl}/api/scores`;
+      console.log(`🏆 Submitting score to: ${url}`);
+      
+      const response = await fetch(url, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(scoreData)
       });
       
+      console.log(`🏆 Score submission response status: ${response.status}`);
+      
       if (!response.ok) {
         throw new Error(`HTTP error! status: ${response.status}`);
       }
       
-      let result;
-      try {
-        result = await response.json();
-      } catch (jsonError) {
-        console.error("Failed to parse server response:", jsonError);
-        throw jsonError;
+      // Check if response has content before parsing
+      const responseText = await response.text();
+      console.log(`🏆 Score submission raw response: "${responseText}"`);
+      
+      let result = {};
+      if (responseText && responseText.trim() !== '') {
+        try {
+          result = JSON.parse(responseText);
+        } catch (jsonError) {
+          console.error("Failed to parse server response:", jsonError);
+          // Don't throw here - the submission might have succeeded even if parsing failed
+          console.log("Treating as successful submission despite parse error");
+        }
       }
       
       console.log("Score submitted successfully:", result);
@@ -348,29 +362,41 @@ export default function GamePage() {
     }
   };
 
-  const handleSkipHighScore = async () => {
-    // Fetch leaderboard even if they skip submission
-    await fetchLeaderboard();
-    setScoreSubmitted(true);
-  };
-
   const fetchLeaderboard = async () => {
     setLoadingLeaderboard(true);
     try {
       console.log(`🏆 Fetching leaderboard...`);
-      const response = await fetch('/api/scores');
+      
+      // Use the same base URL pattern as level fetching
+      const backendBaseUrl = import.meta.env.VITE_API_BASE_URL || "http://localhost:3000";
+      const url = `${backendBaseUrl}/api/scores`;
+      console.log(`🏆 Fetching leaderboard from: ${url}`);
+      
+      const response = await fetch(url);
       console.log(`🏆 Leaderboard response status: ${response.status}`);
       
       if (response.ok) {
         const rawText = await response.text();
         console.log(`🏆 Leaderboard raw response: ${rawText}`);
         
-        const scores = JSON.parse(rawText);
-        console.log(`🏆 Leaderboard parsed scores:`, scores);
+        // Handle empty response
+        if (!rawText || rawText.trim() === '') {
+          console.log(`🏆 Empty leaderboard response`);
+          setLeaderboardData([]);
+          return;
+        }
         
-        // Sort by time (ascending - fastest first) and take top 10
-        const sortedScores = scores.sort((a, b) => a.time - b.time).slice(0, 10);
-        setLeaderboardData(sortedScores);
+        try {
+          const scores = JSON.parse(rawText);
+          console.log(`🏆 Leaderboard parsed scores:`, scores);
+          
+          // Sort by time (ascending - fastest first) and take top 10
+          const sortedScores = scores.sort((a, b) => a.time - b.time).slice(0, 10);
+          setLeaderboardData(sortedScores);
+        } catch (parseError) {
+          console.error("Failed to parse leaderboard response:", parseError);
+          setLeaderboardData([]);
+        }
       } else {
         console.error("Failed to fetch leaderboard");
         setLeaderboardData([]);
