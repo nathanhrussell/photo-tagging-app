@@ -195,7 +195,7 @@ export default function GamePage() {
   }, [gameStarted, timerActive, foundCharacters.length, levelId, elapsed]);
 
   const getCharacterImage = (index) =>
-    `images/characters/level${levelId}char${index + 1}.png`;
+    `/images/characters/level${levelId}char${index + 1}.png`;
 
   const handleImageClick = (e) => {
     if (foundCharacters.length === 3) return;
