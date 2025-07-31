@@ -235,7 +235,7 @@ export default function GamePage() {
       
       // Use the same base URL pattern as the level fetching
       const backendBaseUrl = import.meta.env.VITE_API_BASE_URL || "http://localhost:3000";
-      const url = `${backendBaseUrl}/api/validate-click`;
+      const url = `${backendBaseUrl}/validate-click`;
       console.log(`🎯 Validation URL: ${url}`);
       
       const res = await fetch(url, {
