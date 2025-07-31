@@ -304,6 +304,53 @@ export default function GamePage() {
     navigate(`/game/${nextId}`);
   };
 
+  const fetchLeaderboard = async () => {
+    setLoadingLeaderboard(true);
+    try {
+      console.log(`🏆 Fetching leaderboard...`);
+      
+      // Use the same base URL pattern as level fetching
+      const backendBaseUrl = import.meta.env.VITE_API_BASE_URL || "http://localhost:3000";
+      const url = `${backendBaseUrl}/api/scores`;
+      console.log(`🏆 Fetching leaderboard from: ${url}`);
+      
+      const response = await fetch(url);
+      console.log(`🏆 Leaderboard response status: ${response.status}`);
+      
+      if (response.ok) {
+        const rawText = await response.text();
+        console.log(`🏆 Leaderboard raw response: ${rawText}`);
+        
+        // Handle empty response
+        if (!rawText || rawText.trim() === '') {
+          console.log(`🏆 Empty leaderboard response`);
+          setLeaderboardData([]);
+          return;
+        }
+        
+        try {
+          const scores = JSON.parse(rawText);
+          console.log(`🏆 Leaderboard parsed scores:`, scores);
+          
+          // Sort by time (ascending - fastest first) and take top 10
+          const sortedScores = scores.sort((a, b) => a.time - b.time).slice(0, 10);
+          setLeaderboardData(sortedScores);
+        } catch (parseError) {
+          console.error("Failed to parse leaderboard response:", parseError);
+          setLeaderboardData([]);
+        }
+      } else {
+        console.error("Failed to fetch leaderboard");
+        setLeaderboardData([]);
+      }
+    } catch (error) {
+      console.error("Error fetching leaderboard:", error);
+      setLeaderboardData([]);
+    } finally {
+      setLoadingLeaderboard(false);
+    }
+  };
+
   const handleHighScoreSubmit = async (e) => {
     e.preventDefault();
     if (!playerName.trim()) return;
@@ -362,52 +409,12 @@ export default function GamePage() {
     }
   };
 
-  const fetchLeaderboard = async () => {
-    setLoadingLeaderboard(true);
-    try {
-      console.log(`🏆 Fetching leaderboard...`);
-      
-      // Use the same base URL pattern as level fetching
-      const backendBaseUrl = import.meta.env.VITE_API_BASE_URL || "http://localhost:3000";
-      const url = `${backendBaseUrl}/api/scores`;
-      console.log(`🏆 Fetching leaderboard from: ${url}`);
-      
-      const response = await fetch(url);
-      console.log(`🏆 Leaderboard response status: ${response.status}`);
-      
-      if (response.ok) {
-        const rawText = await response.text();
-        console.log(`🏆 Leaderboard raw response: ${rawText}`);
-        
-        // Handle empty response
-        if (!rawText || rawText.trim() === '') {
-          console.log(`🏆 Empty leaderboard response`);
-          setLeaderboardData([]);
-          return;
-        }
-        
-        try {
-          const scores = JSON.parse(rawText);
-          console.log(`🏆 Leaderboard parsed scores:`, scores);
-          
-          // Sort by time (ascending - fastest first) and take top 10
-          const sortedScores = scores.sort((a, b) => a.time - b.time).slice(0, 10);
-          setLeaderboardData(sortedScores);
-        } catch (parseError) {
-          console.error("Failed to parse leaderboard response:", parseError);
-          setLeaderboardData([]);
-        }
-      } else {
-        console.error("Failed to fetch leaderboard");
-        setLeaderboardData([]);
-      }
-    } catch (error) {
-      console.error("Error fetching leaderboard:", error);
-      setLeaderboardData([]);
-    } finally {
-      setLoadingLeaderboard(false);
-    }
+  const handleSkipHighScore = async () => {
+    // Fetch leaderboard even if they skip submission
+    await fetchLeaderboard();
+    setScoreSubmitted(true);
   };
+
 
   const resetGameAndGoHome = () => {
     // Clear session storage to reset the game state
