@@ -304,6 +304,12 @@ export default function GamePage() {
     navigate(`/game/${nextId}`);
   };
 
+    const handleSkipHighScore = async () => {
+    // Fetch leaderboard even if they skip submission
+    await fetchLeaderboard();
+    setScoreSubmitted(true);
+  };
+
   const fetchLeaderboard = async () => {
     setLoadingLeaderboard(true);
     try {
@@ -408,13 +414,6 @@ export default function GamePage() {
       setScoreSubmitted(true);
     }
   };
-
-  const handleSkipHighScore = async () => {
-    // Fetch leaderboard even if they skip submission
-    await fetchLeaderboard();
-    setScoreSubmitted(true);
-  };
-
 
   const resetGameAndGoHome = () => {
     // Clear session storage to reset the game state
