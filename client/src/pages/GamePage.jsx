@@ -304,7 +304,7 @@ export default function GamePage() {
     navigate(`/game/${nextId}`);
   };
 
-    const handleSkipHighScore = async () => {
+  const handleSkipHighScore = async () => {
     // Fetch leaderboard even if they skip submission
     await fetchLeaderboard();
     setScoreSubmitted(true);
@@ -317,7 +317,7 @@ export default function GamePage() {
       
       // Use the same base URL pattern as level fetching
       const backendBaseUrl = import.meta.env.VITE_API_BASE_URL || "http://localhost:3000";
-      const url = `${backendBaseUrl}/api/scores`;
+      const url = `${backendBaseUrl}/scores`;
       console.log(`🏆 Fetching leaderboard from: ${url}`);
       
       const response = await fetch(url);
@@ -372,7 +372,7 @@ export default function GamePage() {
     try {
       // Use the same base URL pattern as level fetching
       const backendBaseUrl = import.meta.env.VITE_API_BASE_URL || "http://localhost:3000";
-      const url = `${backendBaseUrl}/api/scores`;
+      const url = `${backendBaseUrl}/scores`;
       console.log(`🏆 Submitting score to: ${url}`);
       
       const response = await fetch(url, {
