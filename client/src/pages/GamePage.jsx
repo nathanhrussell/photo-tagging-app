@@ -15,6 +15,7 @@ export default function GamePage() {
   const navigate = useNavigate();
   const svgRef = useRef(null);
   const [levelData, setLevelData] = useState(null);
+  const [debugInfo, setDebugInfo] = useState(null); // Added for debugging
   
   const [gameStarted, setGameStarted] = useState(false);
   const [circle, setCircle] = useState(null);
@@ -81,25 +82,77 @@ export default function GamePage() {
 
     const fetchLevel = async () => {
       try {
+        console.log(`🔍 Starting fetch for level ${levelId}`);
+        
         // Check if level is unlocked first
         const isUnlocked = checkLevelUnlocked(levelId);
         setIsLevelLocked(!isUnlocked);
+        console.log(`🔐 Level ${levelId} unlocked: ${isUnlocked}`);
         
-        const res = await fetch(`/api/levels/${levelId}`);
-        const data = await res.json();
+        // Construct the URL and log it
+        const url = `/api/levels/${levelId}`;
+        console.log(`📡 Fetching from: ${url}`);
+        
+        const res = await fetch(url);
+        console.log(`📊 Response status: ${res.status} ${res.statusText}`);
+        console.log(`📊 Response headers:`, res.headers);
+        console.log(`📊 Response ok: ${res.ok}`);
+        
+        if (!res.ok) {
+          throw new Error(`HTTP error! status: ${res.status} ${res.statusText}`);
+        }
+        
+        // Get the raw response text first
+        const rawText = await res.text();
+        console.log(`📄 Raw response length: ${rawText.length}`);
+        console.log(`📄 Raw response preview: ${rawText.substring(0, 200)}...`);
+        
+        // Try to parse the JSON
+        let data;
+        try {
+          data = JSON.parse(rawText);
+          console.log(`✅ JSON parsed successfully:`, data);
+        } catch (jsonError) {
+          console.error(`❌ JSON parse error:`, jsonError);
+          console.error(`❌ Raw text that failed to parse:`, rawText);
+          setDebugInfo({
+            error: 'JSON Parse Error',
+            status: res.status,
+            rawText: rawText,
+            jsonError: jsonError.message
+          });
+          throw new Error(`Failed to parse JSON: ${jsonError.message}`);
+        }
+        
+        // Validate the data structure
+        if (!data || typeof data !== 'object') {
+          console.error(`❌ Invalid data structure:`, data);
+          throw new Error('Invalid data structure received');
+        }
+        
+        if (!data.characters || !Array.isArray(data.characters)) {
+          console.error(`❌ Missing or invalid characters array:`, data);
+          throw new Error('Characters data missing or invalid');
+        }
+        
+        console.log(`✅ Level data validated successfully`);
         setLevelData(data);
+        setDebugInfo(null); // Clear debug info on success
 
-        // const charRes = await fetch(`/api/levels/${levelId}/characters`);
-        // const charData = await charRes.json();
-        // setHitboxes(charData);
         if (levelId === "1") {
           sessionStorage.setItem("totalTime", "0");
         }
 
         const previousTime = levelId !== "1" ? parseInt(sessionStorage.getItem("totalTime") || "0") : 0;
         setElapsed(previousTime);
+        
       } catch (err) {
-        console.error("Failed to load level or character data", err);
+        console.error("❌ Failed to load level or character data", err);
+        setDebugInfo({
+          error: err.message,
+          levelId: levelId,
+          timestamp: new Date().toISOString()
+        });
       }
     };
 
@@ -177,13 +230,25 @@ export default function GamePage() {
     };
 
     try {
+      console.log(`🎯 Validating character selection:`, payload);
+      
       const res = await fetch("/api/validate-click", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(payload)
       });
 
-      const data = await res.json();
+      console.log(`🎯 Validation response status: ${res.status}`);
+      
+      if (!res.ok) {
+        throw new Error(`HTTP error! status: ${res.status}`);
+      }
+
+      const rawText = await res.text();
+      console.log(`🎯 Validation raw response: ${rawText}`);
+      
+      const data = JSON.parse(rawText);
+      console.log(`🎯 Validation parsed data:`, data);
 
       if (data.correct) {
         setFeedback("correct");
@@ -261,9 +326,17 @@ export default function GamePage() {
   const fetchLeaderboard = async () => {
     setLoadingLeaderboard(true);
     try {
+      console.log(`🏆 Fetching leaderboard...`);
       const response = await fetch('/api/scores');
+      console.log(`🏆 Leaderboard response status: ${response.status}`);
+      
       if (response.ok) {
-        const scores = await response.json();
+        const rawText = await response.text();
+        console.log(`🏆 Leaderboard raw response: ${rawText}`);
+        
+        const scores = JSON.parse(rawText);
+        console.log(`🏆 Leaderboard parsed scores:`, scores);
+        
         // Sort by time (ascending - fastest first) and take top 10
         const sortedScores = scores.sort((a, b) => a.time - b.time).slice(0, 10);
         setLeaderboardData(sortedScores);
@@ -301,7 +374,28 @@ export default function GamePage() {
     navigate("/");
   };
 
-  if (!levelData) return <div className="text-white p-8">Loading...</div>;
+  // Show debug info if there's an error
+  if (debugInfo) {
+    return (
+      <div className="text-white p-8 bg-red-900 min-h-screen">
+        <h1 className="text-2xl font-bold mb-4">🐛 Debug Information</h1>
+        <div className="bg-red-800 p-4 rounded mb-4">
+          <h2 className="font-bold mb-2">Error Details:</h2>
+          <pre className="text-sm overflow-auto whitespace-pre-wrap">
+            {JSON.stringify(debugInfo, null, 2)}
+          </pre>
+        </div>
+        <button 
+          onClick={() => window.location.reload()} 
+          className="bg-blue-600 hover:bg-blue-700 px-4 py-2 rounded"
+        >
+          Reload Page
+        </button>
+      </div>
+    );
+  }
+
+  if (!levelData) return <div className="text-white p-8">Loading level {levelId}...</div>;
 
   const showNextLevel = foundCharacters.length === 3 && parseInt(levelId) < 5;
 
@@ -533,7 +627,7 @@ export default function GamePage() {
           </div>
           <div className="p-6">
             <div className="flex justify-center gap-4 flex-wrap max-w-[300px] mx-auto">
-              {[...levelData.characters]
+              {levelData.characters && [...levelData.characters]
                 .sort((a, b) => {
                   const aNum = parseInt(a.name.replace(/\D/g, ""));
                   const bNum = parseInt(b.name.replace(/\D/g, ""));
