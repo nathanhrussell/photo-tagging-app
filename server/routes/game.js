@@ -82,9 +82,23 @@ export default function gameRouter(prismaInstance) {
 
   // POST /validate-click
   router.post("/validate-click", async (req, res) => {
-    const { levelId, character, x, y } = req.body;
-    console.log(`[BACKEND] Validating click for level ${levelId}, char ${character}`);
+    console.log(`[BACKEND] Received validation request:`, req.body);
+    
     try {
+      const { levelId, character, x, y } = req.body;
+      
+      // Validate required fields
+      if (!levelId || !character || x == null || y == null) {
+        console.log("❌ Missing required fields:", { levelId, character, x, y });
+        return res.status(400).json({ 
+          correct: false, 
+          error: "Missing required fields",
+          received: { levelId, character, x, y }
+        });
+      }
+
+      console.log(`[BACKEND] Validating click for level ${levelId}, char "${character}" at (${x}, ${y})`);
+      
       const match = await prisma.character.findFirst({
         where: {
           levelId: parseInt(levelId),
@@ -93,24 +107,48 @@ export default function gameRouter(prismaInstance) {
       });
 
       if (!match) {
-        console.log("❌ Character not found:", character);
-        return res.status(404).json({ correct: false, message: "Character not found" });
+        console.log(`❌ Character not found: "${character}" in level ${levelId}`);
+        return res.status(200).json({ 
+          correct: false, 
+          message: "Character not found",
+          character: character,
+          levelId: levelId
+        });
       }
+
+      console.log(`[BACKEND] Found character:`, {
+        name: match.name,
+        x: match.x,
+        y: match.y,
+        width: match.width,
+        height: match.height
+      });
 
       const userX = Number(x);
       const userY = Number(y);
       const withinX = userX >= match.x && userX <= match.x + match.width;
       const withinY = userY >= match.y && userY <= match.y + match.height;
 
-      console.log(
-        `User click: (${userX}, ${userY}) | Target: (${match.x}, ${match.y}) | ` +
-        `Width: ${match.width} | Height: ${match.height}`
-      );
+      console.log(`[BACKEND] Click validation:`, {
+        userClick: `(${userX}, ${userY})`,
+        targetArea: `(${match.x}, ${match.y}) to (${match.x + match.width}, ${match.y + match.height})`,
+        withinX,
+        withinY,
+        result: withinX && withinY
+      });
 
-      res.json({ correct: withinX && withinY });
+      const result = { correct: withinX && withinY };
+      console.log(`[BACKEND] Sending response:`, result);
+      
+      res.json(result);
     } catch (err) {
       console.error("❌ Server error in validate-click:", err);
-      return res.status(500).json({ error: "Server error", details: err.message });
+      console.error("❌ Error stack:", err.stack);
+      return res.status(500).json({ 
+        correct: false,
+        error: "Server error", 
+        details: err.message 
+      });
     }
   });
 

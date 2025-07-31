@@ -233,23 +233,43 @@ export default function GamePage() {
     try {
       console.log(`🎯 Validating character selection:`, payload);
       
-      const res = await fetch("/api/validate-click", {
+      // Use the same base URL pattern as the level fetching
+      const backendBaseUrl = import.meta.env.VITE_API_BASE_URL || "http://localhost:3000";
+      const url = `${backendBaseUrl}/api/validate-click`;
+      console.log(`🎯 Validation URL: ${url}`);
+      
+      const res = await fetch(url, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(payload)
       });
 
       console.log(`🎯 Validation response status: ${res.status}`);
+      console.log(`🎯 Validation response ok: ${res.ok}`);
       
       if (!res.ok) {
+        console.error(`🎯 Validation failed with status: ${res.status} ${res.statusText}`);
         throw new Error(`HTTP error! status: ${res.status}`);
       }
 
       const rawText = await res.text();
-      console.log(`🎯 Validation raw response: ${rawText}`);
+      console.log(`🎯 Validation raw response: "${rawText}"`);
       
-      const data = JSON.parse(rawText);
-      console.log(`🎯 Validation parsed data:`, data);
+      // Check if response is empty
+      if (!rawText || rawText.trim() === '') {
+        console.error(`🎯 Empty response received`);
+        throw new Error('Empty response from server');
+      }
+      
+      let data;
+      try {
+        data = JSON.parse(rawText);
+        console.log(`🎯 Validation parsed data:`, data);
+      } catch (parseError) {
+        console.error(`🎯 JSON parse error:`, parseError);
+        console.error(`🎯 Raw text that failed to parse: "${rawText}"`);
+        throw new Error(`Failed to parse response: ${parseError.message}`);
+      }
 
       if (data.correct) {
         setFeedback("correct");
@@ -264,6 +284,9 @@ export default function GamePage() {
       setPercentCoords(null);
     } catch (err) {
       console.error("❌ Error validating click:", err);
+      // Show user-friendly error
+      setFeedback("error");
+      setTimeout(() => setFeedback(null), 2000);
     }
   };
 
