@@ -90,7 +90,8 @@ export default function GamePage() {
         console.log(`🔐 Level ${levelId} unlocked: ${isUnlocked}`);
         
         // Construct the URL and log it
-        const url = `/api/levels/${levelId}`;
+        const backendBaseUrl = import.meta.env.VITE_API_BASE_URL || "http://localhost:3000";
+        const url = `${backendBaseUrl}/levels/${levelId}`;
         console.log(`📡 Fetching from: ${url}`);
         
         const res = await fetch(url);
